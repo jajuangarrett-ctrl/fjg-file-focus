@@ -1,5 +1,11 @@
 # Releases
 
+## 0.1.3
+
+- Added a File Pane setting to only show supported document file types.
+- Supported extensions are `pdf`, `doc`, `docx`, `rtf`, `txt`, `odt`, `ott`, `pages`, `xls`, `xlsx`, `xlsm`, `xlt`, `xltx`, `csv`, `tsv`, `html`, `htm`, `xhtml`, `mht`, `mhtml`, `md`, `epub`, and `excalidraw`.
+- Applied the supported-type filter to file lists, search results, tag searches, and folder counts.
+
 ## 0.1.2
 
 - Removed custom `file-open` Recent Notes tracking from the normal note-click path.

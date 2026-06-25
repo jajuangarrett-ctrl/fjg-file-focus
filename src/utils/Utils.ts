@@ -5,6 +5,32 @@ import { VaultChangeModal } from 'modals';
 
 declare const app: App;
 
+const SUPPORTED_FILE_EXTENSIONS = new Set([
+    'pdf',
+    'doc',
+    'docx',
+    'rtf',
+    'txt',
+    'odt',
+    'ott',
+    'pages',
+    'xls',
+    'xlsx',
+    'xlsm',
+    'xlt',
+    'xltx',
+    'csv',
+    'tsv',
+    'html',
+    'htm',
+    'xhtml',
+    'mht',
+    'mhtml',
+    'md',
+    'epub',
+    'excalidraw',
+]);
+
 // Helper Function To Get List of Files
 export const getFilesUnderPath = (params: {
     path: string;
@@ -22,12 +48,7 @@ export const getFilesUnderPath = (params: {
         if (folderObj instanceof TFolder && folderObj.children) {
             for (let child of folderObj.children) {
                 if (child instanceof TFile) {
-                    if (
-                        excludedExtensions.includes(child.extension) ||
-                        (plugin.settings.hideAttachments && child.path.toLowerCase().includes(plugin.settings.attachmentsFolderName.toLowerCase())) ||
-                        excludedFolders.includes(child.parent.path)
-                    )
-                        continue;
+                    if (shouldExcludeFile({ file: child, plugin, excludedExtensions, excludedFolders })) continue;
                     filesUnderPath.push(TFile2OZFile(child));
                 }
                 if (child instanceof TFolder && showFilesFromSubFolders) recursiveFx(child, app);
@@ -35,6 +56,30 @@ export const getFilesUnderPath = (params: {
         }
     }
     return filesUnderPath;
+};
+
+export const shouldExcludeFile = (params: {
+    file: TFile;
+    plugin: FileTreeAlternativePlugin;
+    excludedExtensions?: string[];
+    excludedFolders?: string[];
+}): boolean => {
+    const { file, plugin, excludedExtensions = [], excludedFolders = [] } = params;
+    const extension = file.extension.toLowerCase();
+
+    if (plugin.settings.showOnlySupportedFileTypes && !SUPPORTED_FILE_EXTENSIONS.has(extension)) return true;
+    if (excludedExtensions.map((excluded) => excluded.toLowerCase()).includes(extension)) return true;
+    if (plugin.settings.hideAttachments && file.path.toLowerCase().includes(plugin.settings.attachmentsFolderName.toLowerCase())) return true;
+    if (excludedFolders.includes(file.parent.path)) return true;
+
+    return false;
+};
+
+const settingListToArray = (value: string): string[] => {
+    return value
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean);
 };
 
 // Converted from TFile to OZFile
@@ -94,6 +139,16 @@ export const getFolderNoteCountMap = (plugin: FileTreeAlternativePlugin) => {
     } else {
         files = plugin.app.vault.getFiles();
     }
+
+    files = files.filter(
+        (file) =>
+            !shouldExcludeFile({
+                file,
+                plugin,
+                excludedExtensions: settingListToArray(plugin.settings.excludedExtensions),
+                excludedFolders: settingListToArray(plugin.settings.excludedFolders),
+            })
+    );
 
     // Filter Folder Note Files
     if (plugin.settings.folderNote) {

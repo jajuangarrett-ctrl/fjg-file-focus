@@ -14,6 +14,7 @@ export interface FileTreeAlternativePluginSettings {
     ribbonIcon: boolean;
     showRootFolder: boolean;
     showFilesFromSubFolders: boolean;
+    showOnlySupportedFileTypes: boolean;
     searchFunction: boolean;
     allSearchOnlyInFocusedFolder: boolean;
     showFilesFromSubFoldersButton: boolean;
@@ -48,6 +49,7 @@ export const DEFAULT_SETTINGS: FileTreeAlternativePluginSettings = {
     ribbonIcon: true,
     showRootFolder: true,
     showFilesFromSubFolders: true,
+    showOnlySupportedFileTypes: false,
     searchFunction: true,
     allSearchOnlyInFocusedFolder: false,
     showFilesFromSubFoldersButton: true,
@@ -301,6 +303,17 @@ export class FileTreeAlternativePluginSettingsTab extends PluginSettingTab {
                     this.plugin.settings.showFilesFromSubFoldersButton = value;
                     this.plugin.saveSettings();
                     this.refreshView();
+                })
+            );
+
+        new Setting(containerEl)
+            .setName('Only show supported document file types')
+            .setDesc('When enabled, the file pane only shows Markdown plus supported document, spreadsheet, web, ebook, and Excalidraw files.')
+            .addToggle((toggle) =>
+                toggle.setValue(this.plugin.settings.showOnlySupportedFileTypes).onChange((value) => {
+                    this.plugin.settings.showOnlySupportedFileTypes = value;
+                    this.plugin.saveSettings();
+                    this.plugin.refreshTreeLeafs();
                 })
             );
 

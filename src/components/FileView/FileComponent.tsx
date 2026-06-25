@@ -41,7 +41,7 @@ export function FileComponent(props: FilesProps) {
     // Folder Name Update once Active Folder Path Change
     useEffect(() => setTreeHeader(Util.getFolderName(activeFolderPath, plugin.app)), [activeFolderPath]);
 
-    // File List Update once showSubFolders change
+    // File List Update once file visibility settings change
     useEffect(() => {
         setOzFileList(
             Util.getFilesUnderPath({
@@ -51,7 +51,7 @@ export function FileComponent(props: FilesProps) {
                 excludedFolders: excludedFolders,
             })
         );
-    }, [showSubFolders, excludedExtensions, excludedFolders]);
+    }, [showSubFolders, excludedExtensions, excludedFolders, plugin.settings.showOnlySupportedFileTypes]);
 
     // To focus on Search box if visible set
     useEffect(() => {
