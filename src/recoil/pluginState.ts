@@ -1,10 +1,10 @@
 import { TFile, TFolder } from 'obsidian';
 import { atom } from 'recoil';
-import { FolderTree, FolderFileCountMap, OZFile } from 'utils/types';
+import { FileTreeViewMode, FolderTree, FolderFileCountMap, OZFile } from 'utils/types';
 
 export const view = atom({
     key: 'fileTreeViewState',
-    default: 'folder',
+    default: 'folder' as FileTreeViewMode,
 });
 
 export const activeFolderPath = atom({

@@ -1,7 +1,7 @@
 import FileTreeAlternativePlugin from './main';
 import { PluginSettingTab, Setting, App, Notice } from 'obsidian';
 import { LocalStorageHandler } from '@ozntel/local-storage-handler';
-import { eventTypes } from 'utils/types';
+import { FocusRecentFileEntry, eventTypes } from 'utils/types';
 
 type FolderIcon = 'default' | 'box-folder' | 'icomoon' | 'typicon' | 'circle-gg';
 export type SortType = 'name' | 'last-update' | 'created' | 'file-size';
@@ -38,6 +38,10 @@ export interface FileTreeAlternativePluginSettings {
     deleteFileOption: DeleteFileOption;
     showFileNameAsFullPath: boolean;
     bookmarksEvents: boolean;
+    focusMaxRecentFiles: number;
+    focusShowPaths: boolean;
+    focusOpenInNewTab: boolean;
+    focusRecentFiles: FocusRecentFileEntry[];
 }
 
 export const DEFAULT_SETTINGS: FileTreeAlternativePluginSettings = {
@@ -69,6 +73,10 @@ export const DEFAULT_SETTINGS: FileTreeAlternativePluginSettings = {
     deleteFileOption: 'trash',
     showFileNameAsFullPath: false,
     bookmarksEvents: false,
+    focusMaxRecentFiles: 30,
+    focusShowPaths: true,
+    focusOpenInNewTab: true,
+    focusRecentFiles: [],
 };
 
 export class FileTreeAlternativePluginSettingsTab extends PluginSettingTab {
@@ -158,6 +166,45 @@ export class FileTreeAlternativePluginSettingsTab extends PluginSettingTab {
                     } else {
                         this.plugin.bookmarksRemoveEventListener();
                     }
+                    this.plugin.saveSettings();
+                })
+            );
+
+        containerEl.createEl('h2', { text: 'FJG File Focus' });
+
+        new Setting(containerEl)
+            .setName('Max recent notes')
+            .setDesc('How many recently opened notes and canvases to show in the File Focus recent panel.')
+            .addText((text) => {
+                text.inputEl.type = 'number';
+                text.setPlaceholder(String(DEFAULT_SETTINGS.focusMaxRecentFiles))
+                    .setValue(String(this.plugin.settings.focusMaxRecentFiles))
+                    .onChange((value) => {
+                        const parsed = Number.parseInt(value, 10);
+                        this.plugin.settings.focusMaxRecentFiles = Number.isFinite(parsed) ? Math.max(1, parsed) : DEFAULT_SETTINGS.focusMaxRecentFiles;
+                        this.plugin.settings.focusRecentFiles = this.plugin.settings.focusRecentFiles.slice(0, this.plugin.settings.focusMaxRecentFiles);
+                        this.plugin.saveSettings();
+                        this.refreshView();
+                    });
+            });
+
+        new Setting(containerEl)
+            .setName('Show paths in focus panels')
+            .setDesc('Show vault paths under recent notes and bookmarks.')
+            .addToggle((toggle) =>
+                toggle.setValue(this.plugin.settings.focusShowPaths).onChange((value) => {
+                    this.plugin.settings.focusShowPaths = value;
+                    this.plugin.saveSettings();
+                    this.refreshView();
+                })
+            );
+
+        new Setting(containerEl)
+            .setName('Open focus items in new tabs')
+            .setDesc('Open recent notes and bookmark files in a new Obsidian tab.')
+            .addToggle((toggle) =>
+                toggle.setValue(this.plugin.settings.focusOpenInNewTab).onChange((value) => {
+                    this.plugin.settings.focusOpenInNewTab = value;
                     this.plugin.saveSettings();
                 })
             );

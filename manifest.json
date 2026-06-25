@@ -1,11 +1,9 @@
 {
-    "id": "file-tree-alternative",
-    "name": "File Tree Alternative",
-    "version": "2.6.0",
+    "id": "fjg-file-focus",
+    "name": "FJG File Focus",
+    "version": "0.1.0",
     "minAppVersion": "0.15.0",
-    "description": "This plugin allows you to have an alternative file tree view.",
-    "author": "Ozan Tellioglu",
-    "authorUrl": "https://www.ozan.pl",
-    "fundingUrl": "https://ko-fi.com/ozante",
+    "description": "A Franklin Garrett file focus sidebar with file tree navigation, recent notes, and bookmarks.",
+    "author": "Franklin Garrett",
     "isDesktopOnly": false
 }

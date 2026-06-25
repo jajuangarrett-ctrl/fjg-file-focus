@@ -1,8 +1,8 @@
-import { Plugin, addIcon, TAbstractFile, Notice } from 'obsidian';
+import { Plugin, addIcon, TAbstractFile, Notice, TFile } from 'obsidian';
 import { FileTreeView } from './FileTreeView';
 import { ZoomInIcon, ZoomOutIcon, ZoomOutDoubleIcon, LocationIcon, SpaceIcon } from './utils/icons';
 import { FileTreeAlternativePluginSettings, FileTreeAlternativePluginSettingsTab, DEFAULT_SETTINGS } from './settings';
-import { VaultChange, eventTypes } from 'utils/types';
+import { FileTreeViewMode, VaultChange, eventTypes } from 'utils/types';
 import { getBookmarkTitle } from 'utils/Utils';
 
 export default class FileTreeAlternativePlugin extends Plugin {
@@ -10,21 +10,21 @@ export default class FileTreeAlternativePlugin extends Plugin {
     ribbonIconEl: HTMLElement | undefined = undefined;
 
     keys = {
-        activeFolderPathKey: 'fileTreePlugin-ActiveFolderPath',
-        pinnedFilesKey: 'fileTreePlugin-PinnedFiles',
-        openFoldersKey: 'fileTreePlugin-OpenFolders',
-        customHeightKey: 'fileTreePlugin-CustomHeight',
-        customWidthKey: 'fileTreePlugin-CustomWidth',
-        focusedFolder: 'fileTreePlugin-FocusedFolder',
+        activeFolderPathKey: 'fjgFileFocus-ActiveFolderPath',
+        pinnedFilesKey: 'fjgFileFocus-PinnedFiles',
+        openFoldersKey: 'fjgFileFocus-OpenFolders',
+        customHeightKey: 'fjgFileFocus-CustomHeight',
+        customWidthKey: 'fjgFileFocus-CustomWidth',
+        focusedFolder: 'fjgFileFocus-FocusedFolder',
     };
 
     // File Tree View Variables
-    VIEW_TYPE = 'file-tree-view';
-    VIEW_DISPLAY_TEXT = 'File Tree';
+    VIEW_TYPE = 'fjg-file-focus-view';
+    VIEW_DISPLAY_TEXT = 'FJG File Focus';
     ICON = 'sheets-in-box';
 
     async onload() {
-        console.log('Loading Alternative File Tree Plugin');
+        console.log('Loading FJG File Focus Plugin');
 
         addIcon('zoomInIcon', ZoomInIcon);
         addIcon('zoomOutIcon', ZoomOutIcon);
@@ -50,9 +50,21 @@ export default class FileTreeAlternativePlugin extends Plugin {
 
         // Add Command to Open File Tree Leaf
         this.addCommand({
-            id: 'open-file-tree-view',
-            name: 'Open File Tree View',
+            id: 'open-fjg-file-focus-view',
+            name: 'Open FJG File Focus view',
             callback: async () => await this.openFileTreeLeaf(true),
+        });
+
+        this.addCommand({
+            id: 'open-recent-notes-panel',
+            name: 'Open Recent Notes in FJG File Focus',
+            callback: async () => await this.openFocusPanel('recent'),
+        });
+
+        this.addCommand({
+            id: 'open-bookmarks-panel',
+            name: 'Open Bookmarks in FJG File Focus',
+            callback: async () => await this.openFocusPanel('bookmarks'),
         });
 
         this.app.workspace.onLayoutReady(() => {
@@ -100,12 +112,18 @@ export default class FileTreeAlternativePlugin extends Plugin {
         this.app.vault.on('modify', this.onModify);
         this.app.vault.on('rename', this.onRename);
 
+        this.registerEvent(
+            this.app.workspace.on('file-open', async (file) => {
+                if (file instanceof TFile) await this.recordFocusRecentFile(file);
+            })
+        );
+
         // Ribbon Icon For Opening
         this.refreshIconRibbon();
     }
 
     onunload() {
-        console.log('Unloading Alternative File Tree Plugin');
+        console.log('Unloading FJG File Focus Plugin');
         this.detachFileTreeLeafs();
         // Remove event listeners
         this.app.vault.off('create', this.onCreate);
@@ -116,12 +134,41 @@ export default class FileTreeAlternativePlugin extends Plugin {
     }
 
     async loadSettings() {
-        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+        const data = await this.loadData();
+        this.settings = Object.assign({}, DEFAULT_SETTINGS, data);
+        this.settings.focusMaxRecentFiles = Number.isFinite(this.settings.focusMaxRecentFiles)
+            ? Math.max(1, this.settings.focusMaxRecentFiles)
+            : DEFAULT_SETTINGS.focusMaxRecentFiles;
+        this.settings.focusRecentFiles = Array.isArray(this.settings.focusRecentFiles) ? this.settings.focusRecentFiles : [];
     }
 
     async saveSettings() {
         await this.saveData(this.settings);
     }
+
+    async recordFocusRecentFile(file: TFile) {
+        const extension = file.extension.toLowerCase();
+        if (!['md', 'canvas'].includes(extension)) return;
+
+        const nextRecent = {
+            path: file.path,
+            basename: file.basename,
+            extension,
+            timestamp: Date.now(),
+        };
+
+        this.settings.focusRecentFiles = [
+            nextRecent,
+            ...this.settings.focusRecentFiles.filter((entry) => entry.path !== file.path),
+        ].slice(0, this.settings.focusMaxRecentFiles);
+
+        await this.saveSettings();
+    }
+
+    openFocusPanel = async (view: FileTreeViewMode) => {
+        await this.openFileTreeLeaf(true);
+        window.dispatchEvent(new CustomEvent(eventTypes.openFocusPanel, { detail: { view } }));
+    };
 
     bookmarksEventHandler = (event: Event) => {
         // Find the tree-item that includes the bookmarks plugin title
@@ -196,7 +243,7 @@ export default class FileTreeAlternativePlugin extends Plugin {
     refreshIconRibbon = () => {
         this.ribbonIconEl?.remove();
         if (this.settings.ribbonIcon) {
-            this.ribbonIconEl = this.addRibbonIcon(this.ICON, 'File Tree Alternative Plugin', async () => {
+            this.ribbonIconEl = this.addRibbonIcon(this.ICON, 'FJG File Focus', async () => {
                 await this.openFileTreeLeaf(true);
             });
         }

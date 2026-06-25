@@ -1,14 +1,18 @@
 {
-    "name": "file-tree-alternative",
-    "version": "2.6.0",
-    "description": "This plugin allows you to have an alternative file tree view.",
+    "name": "fjg-file-focus",
+    "version": "0.1.0",
+    "description": "FJG-focused Obsidian file tree with sidebar recent notes and bookmarks.",
     "main": "main.js",
     "scripts": {
         "dev": "rollup -c -w --bundleConfigAsCjs",
         "build": "NODE_ENV=production rollup -c --bundleConfigAsCjs"
     },
-    "keywords": [],
-    "author": "",
+    "keywords": ["obsidian", "plugin", "file-tree", "bookmarks", "recent-notes"],
+    "author": "Franklin Garrett",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/jajuangarrett-ctrl/fjg-file-focus.git"
+    },
     "license": "MIT",
     "devDependencies": {
         "@babel/core": "^7.23.3",

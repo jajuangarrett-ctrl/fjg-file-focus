@@ -1,5 +1,55 @@
 import { TFolder, TFile } from 'obsidian';
 
+export type FileTreeViewMode = 'folder' | 'file' | 'recent' | 'bookmarks';
+export type FocusPanelMode = 'recent' | 'bookmarks';
+
+export interface FocusRecentFileEntry {
+    path: string;
+    basename: string;
+    extension: string;
+    timestamp: number;
+}
+
+export type BookmarkType = 'group' | 'folder' | 'file' | 'graph' | 'search' | 'url';
+
+export interface FocusBookmarkItem {
+    ctime?: number;
+    type: BookmarkType;
+    title?: string;
+    items?: FocusBookmarkItem[];
+    path?: string;
+    subpath?: string;
+    query?: string;
+    url?: string;
+}
+
+export interface CoreBookmarksPluginInstance {
+    items: FocusBookmarkItem[];
+    openBookmark: (bookmark: FocusBookmarkItem, type: 'tab' | boolean, eState?: { focus: boolean }) => Promise<void>;
+}
+
+export interface CoreFileExplorerPluginInstance {
+    revealInFolder: (path: TFolder | TFile) => void;
+}
+
+export interface CoreGlobalSearchPluginInstance {
+    openGlobalSearch: (query: string) => void;
+}
+
+export interface CoreWebViewerPluginInstance {
+    openUrl: (url: string, newLeaf: boolean) => void;
+    options?: {
+        openExternalURLs?: boolean;
+    };
+}
+
+export interface AppWithInternalPlugins {
+    internalPlugins?: {
+        getEnabledPluginById: (pluginId: string) => unknown;
+        plugins?: Record<string, { instance?: unknown; _loaded?: boolean }>;
+    };
+}
+
 export interface OZFile {
     path: string;
     basename: string;
@@ -50,6 +100,7 @@ export const eventTypes = {
     revealFolder: 'fta-reveal-folder',
     vaultChange: 'fta-vault-change',
     createNewNote: 'fta-create-new-note',
+    openFocusPanel: 'fjg-file-focus-open-panel',
 };
 
 export interface BookmarksPluginItem {

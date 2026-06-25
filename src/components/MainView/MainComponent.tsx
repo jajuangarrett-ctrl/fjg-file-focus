@@ -3,13 +3,14 @@ import React, { useEffect } from 'react';
 import { FileComponent } from 'components/FileView/FileComponent';
 import { MainFolder } from 'components/FolderView/MainFolder';
 import { SingleViewVertical, SingleViewHorizontal } from 'components/MainView/SingleView';
+import { FocusPanel } from 'components/FocusView/FocusPanel';
 import { FileTreeView } from 'FileTreeView';
 import FileTreeAlternativePlugin from 'main';
 import * as FileTreeUtils from 'utils/Utils';
 import * as recoilState from 'recoil/pluginState';
 import { useRecoilState } from 'recoil';
 import useForceUpdate from 'hooks/ForceUpdate';
-import { CustomVaultChangeEvent, VaultChange, eventTypes, OZFile } from 'utils/types';
+import { CustomVaultChangeEvent, FileTreeViewMode, VaultChange, eventTypes, OZFile } from 'utils/types';
 
 interface MainTreeComponentProps {
     fileTreeView: FileTreeView;
@@ -69,6 +70,7 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
         window.addEventListener(eventTypes.revealFile, handleRevealFileEvent);
         window.addEventListener(eventTypes.revealFolder, handleRevealFolderEvent);
         window.addEventListener(eventTypes.createNewNote, handleCreateNewNoteEvent);
+        window.addEventListener(eventTypes.openFocusPanel, handleOpenFocusPanelEvent);
         return () => {
             window.removeEventListener(eventTypes.vaultChange, vaultChangeEvent);
             window.removeEventListener(eventTypes.activeFileChange, changeActiveFile);
@@ -76,6 +78,7 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
             window.removeEventListener(eventTypes.revealFile, handleRevealFileEvent);
             window.removeEventListener(eventTypes.revealFolder, handleRevealFolderEvent);
             window.removeEventListener(eventTypes.createNewNote, handleCreateNewNoteEvent);
+            window.removeEventListener(eventTypes.openFocusPanel, handleOpenFocusPanelEvent);
         };
     }, []);
 
@@ -86,6 +89,11 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
             return activeFolderPath;
         });
         FileTreeUtils.createNewFile(null, currentActiveFolderPath, plugin);
+    };
+
+    const handleOpenFocusPanelEvent = (evt: Event) => {
+        const view = (evt as CustomEvent<{ view: FileTreeViewMode }>).detail?.view;
+        if (view === 'recent' || view === 'bookmarks') setView(view);
     };
 
     const vaultChangeEvent = (evt: CustomVaultChangeEvent) => {
@@ -443,6 +451,14 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
         <React.Fragment>
             {view === 'folder' ? (
                 <MainFolder plugin={plugin} />
+            ) : view === 'recent' || view === 'bookmarks' ? (
+                plugin.settings.evernoteView === 'Horizontal' ? (
+                    <SingleViewHorizontal plugin={plugin} focusMode={view} />
+                ) : plugin.settings.evernoteView === 'Vertical' ? (
+                    <SingleViewVertical plugin={plugin} focusMode={view} />
+                ) : (
+                    <FocusPanel plugin={plugin} mode={view} />
+                )
             ) : plugin.settings.evernoteView === 'Horizontal' ? (
                 <SingleViewHorizontal plugin={plugin} />
             ) : plugin.settings.evernoteView === 'Vertical' ? (

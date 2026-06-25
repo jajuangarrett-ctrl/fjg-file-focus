@@ -24,6 +24,7 @@ export function MainFolder(props: FolderProps) {
 
     // Global States
     const [_activeFolderPath, setActiveFolderPath] = useRecoilState(recoilState.activeFolderPath);
+    const [view, setView] = useRecoilState(recoilState.view);
     const [folderTree] = useRecoilState(recoilState.folderTree);
     const [focusedFolder, setFocusedFolder] = useRecoilState(recoilState.focusedFolder);
     const [_openFolders, setOpenFolders] = useRecoilState(recoilState.openFolders);
@@ -34,6 +35,10 @@ export function MainFolder(props: FolderProps) {
     const focusOnFolder = (folder: TFolder) => {
         setFocusedFolder(folder);
         setActiveFolderPath(folder.path);
+    };
+
+    const openFocusPanel = (panel: 'recent' | 'bookmarks') => {
+        setView(panel);
     };
 
     const createFolder = (underFolder: TFolder) => {
@@ -152,6 +157,18 @@ export function MainFolder(props: FolderProps) {
                     size={folderActionItemSize}
                     onClick={triggerFolderSortOptions}
                     aria-label="Sorting Options"
+                />
+                <Icons.FaHistory
+                    className={`oz-nav-action-button${view === 'recent' ? ' is-active' : ''}`}
+                    size={folderActionItemSize - 2}
+                    onClick={() => openFocusPanel('recent')}
+                    aria-label="Recent Notes"
+                />
+                <Icons.FaRegBookmark
+                    className={`oz-nav-action-button${view === 'bookmarks' ? ' is-active' : ''}`}
+                    size={folderActionItemSize - 2}
+                    onClick={() => openFocusPanel('bookmarks')}
+                    aria-label="Bookmarks"
                 />
                 <Icons.CgChevronDoubleUp
                     className="oz-nav-action-button"

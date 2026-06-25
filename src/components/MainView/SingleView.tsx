@@ -2,9 +2,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import FileTreeAlternativePlugin from 'main';
 import { MainFolder } from 'components/FolderView/MainFolder';
 import { FileComponent } from 'components/FileView/FileComponent';
+import { FocusPanel } from 'components/FocusView/FocusPanel';
+import { FocusPanelMode } from 'utils/types';
 
-export const SingleViewVertical = (props: { plugin: FileTreeAlternativePlugin }) => {
-    let { plugin } = props;
+export const SingleViewVertical = (props: { plugin: FileTreeAlternativePlugin; focusMode?: FocusPanelMode }) => {
+    let { plugin, focusMode } = props;
 
     const [dividerOnMove, setDividerOnMove] = useState<boolean>(false);
     const [folderPaneHeight, setFolderPaneHeight] = useState<number>(null);
@@ -63,14 +65,14 @@ export const SingleViewVertical = (props: { plugin: FileTreeAlternativePlugin })
                 className={dividerOnMove ? 'active-divider' : ''}></div>
 
             <div className="oz-file-list-pane">
-                <FileComponent plugin={plugin} />
+                {focusMode ? <FocusPanel plugin={plugin} mode={focusMode} /> : <FileComponent plugin={plugin} />}
             </div>
         </div>
     );
 };
 
-export const SingleViewHorizontal = (props: { plugin: FileTreeAlternativePlugin }) => {
-    let { plugin } = props;
+export const SingleViewHorizontal = (props: { plugin: FileTreeAlternativePlugin; focusMode?: FocusPanelMode }) => {
+    let { plugin, focusMode } = props;
 
     const [dividerOnMove, setDividerOnMove] = useState<boolean>(false);
     const [folderPaneWidth, setFolderPaneWidth] = useState<number>(null);
@@ -129,7 +131,7 @@ export const SingleViewHorizontal = (props: { plugin: FileTreeAlternativePlugin 
                 className={dividerOnMove ? 'active-divider' : ''}></div>
 
             <div className="oz-file-list-pane-horizontal">
-                <FileComponent plugin={plugin} />
+                {focusMode ? <FocusPanel plugin={plugin} mode={focusMode} /> : <FileComponent plugin={plugin} />}
             </div>
         </div>
     );
