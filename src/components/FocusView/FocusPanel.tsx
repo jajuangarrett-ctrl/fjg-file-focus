@@ -300,14 +300,7 @@ function EmptyState(props: { title: string; body: string }) {
 
 function getExistingRecentFiles(plugin: FileTreeAlternativePlugin): FocusRecentFileEntry[] {
     const existingPaths = new Set(plugin.app.vault.getFiles().map((file) => file.path));
-    const existingRecent = plugin.settings.focusRecentFiles.filter((entry) => existingPaths.has(entry.path));
-
-    if (existingRecent.length !== plugin.settings.focusRecentFiles.length) {
-        plugin.settings.focusRecentFiles = existingRecent;
-        void plugin.saveSettings();
-    }
-
-    return existingRecent;
+    return plugin.settings.focusRecentFiles.filter((entry) => existingPaths.has(entry.path));
 }
 
 function filterRecentFiles(recentFiles: FocusRecentFileEntry[], query: string): FocusRecentFileEntry[] {

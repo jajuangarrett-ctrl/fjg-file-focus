@@ -8,6 +8,7 @@ import { getBookmarkTitle } from 'utils/Utils';
 export default class FileTreeAlternativePlugin extends Plugin {
     settings: FileTreeAlternativePluginSettings;
     ribbonIconEl: HTMLElement | undefined = undefined;
+    focusRecentSaveTimer: number | null = null;
 
     keys = {
         activeFolderPathKey: 'fjgFileFocus-ActiveFolderPath',
@@ -113,8 +114,8 @@ export default class FileTreeAlternativePlugin extends Plugin {
         this.app.vault.on('rename', this.onRename);
 
         this.registerEvent(
-            this.app.workspace.on('file-open', async (file) => {
-                if (file instanceof TFile) await this.recordFocusRecentFile(file);
+            this.app.workspace.on('file-open', (file) => {
+                if (file instanceof TFile) this.recordFocusRecentFile(file);
             })
         );
 
@@ -130,6 +131,11 @@ export default class FileTreeAlternativePlugin extends Plugin {
         this.app.vault.off('delete', this.onDelete);
         this.app.vault.off('modify', this.onModify);
         this.app.vault.off('rename', this.onRename);
+        if (this.focusRecentSaveTimer !== null) {
+            window.clearTimeout(this.focusRecentSaveTimer);
+            this.focusRecentSaveTimer = null;
+            void this.saveSettings();
+        }
         this.bookmarksRemoveEventListener();
     }
 
@@ -146,9 +152,12 @@ export default class FileTreeAlternativePlugin extends Plugin {
         await this.saveData(this.settings);
     }
 
-    async recordFocusRecentFile(file: TFile) {
+    recordFocusRecentFile(file: TFile) {
         const extension = file.extension.toLowerCase();
         if (!['md', 'canvas'].includes(extension)) return;
+
+        const existingFirst = this.settings.focusRecentFiles[0];
+        if (existingFirst?.path === file.path && existingFirst.basename === file.basename && existingFirst.extension === extension) return;
 
         const nextRecent = {
             path: file.path,
@@ -162,7 +171,15 @@ export default class FileTreeAlternativePlugin extends Plugin {
             ...this.settings.focusRecentFiles.filter((entry) => entry.path !== file.path),
         ].slice(0, this.settings.focusMaxRecentFiles);
 
-        await this.saveSettings();
+        this.scheduleFocusRecentSave();
+    }
+
+    scheduleFocusRecentSave() {
+        if (this.focusRecentSaveTimer !== null) window.clearTimeout(this.focusRecentSaveTimer);
+        this.focusRecentSaveTimer = window.setTimeout(async () => {
+            this.focusRecentSaveTimer = null;
+            await this.saveSettings();
+        }, 1000);
     }
 
     openFocusPanel = async (view: FileTreeViewMode) => {
@@ -225,6 +242,7 @@ export default class FileTreeAlternativePlugin extends Plugin {
     };
 
     triggerVaultChangeEvent = (file: TAbstractFile, changeType: VaultChange, oldPath?: string) => {
+        if (this.isConfigFile(file)) return;
         let event = new CustomEvent(eventTypes.vaultChange, {
             detail: {
                 file: file,
@@ -234,6 +252,11 @@ export default class FileTreeAlternativePlugin extends Plugin {
         });
         window.dispatchEvent(event);
     };
+
+    isConfigFile(file: TAbstractFile) {
+        const configDir = this.app.vault.configDir;
+        return file.path === configDir || file.path.startsWith(`${configDir}/`);
+    }
 
     onCreate = (file: TAbstractFile) => this.triggerVaultChangeEvent(file, 'create', '');
     onDelete = (file: TAbstractFile) => this.triggerVaultChangeEvent(file, 'delete', '');
