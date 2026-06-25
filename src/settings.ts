@@ -1,7 +1,7 @@
 import FileTreeAlternativePlugin from './main';
 import { PluginSettingTab, Setting, App, Notice } from 'obsidian';
 import { LocalStorageHandler } from '@ozntel/local-storage-handler';
-import { FocusRecentFileEntry, eventTypes } from 'utils/types';
+import { eventTypes } from 'utils/types';
 
 type FolderIcon = 'default' | 'box-folder' | 'icomoon' | 'typicon' | 'circle-gg';
 export type SortType = 'name' | 'last-update' | 'created' | 'file-size';
@@ -41,7 +41,6 @@ export interface FileTreeAlternativePluginSettings {
     focusMaxRecentFiles: number;
     focusShowPaths: boolean;
     focusOpenInNewTab: boolean;
-    focusRecentFiles: FocusRecentFileEntry[];
 }
 
 export const DEFAULT_SETTINGS: FileTreeAlternativePluginSettings = {
@@ -76,7 +75,6 @@ export const DEFAULT_SETTINGS: FileTreeAlternativePluginSettings = {
     focusMaxRecentFiles: 30,
     focusShowPaths: true,
     focusOpenInNewTab: true,
-    focusRecentFiles: [],
 };
 
 export class FileTreeAlternativePluginSettingsTab extends PluginSettingTab {
@@ -182,7 +180,6 @@ export class FileTreeAlternativePluginSettingsTab extends PluginSettingTab {
                     .onChange((value) => {
                         const parsed = Number.parseInt(value, 10);
                         this.plugin.settings.focusMaxRecentFiles = Number.isFinite(parsed) ? Math.max(1, parsed) : DEFAULT_SETTINGS.focusMaxRecentFiles;
-                        this.plugin.settings.focusRecentFiles = this.plugin.settings.focusRecentFiles.slice(0, this.plugin.settings.focusMaxRecentFiles);
                         this.plugin.saveSettings();
                         this.refreshView();
                     });

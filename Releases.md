@@ -1,5 +1,10 @@
 # Releases
 
+## 0.1.2
+
+- Removed custom `file-open` Recent Notes tracking from the normal note-click path.
+- Recent Notes now reads Obsidian's workspace recent-file history on demand, matching the original file tree's no-write behavior during file clicks.
+
 ## 0.1.1
 
 - Fixed sidebar refresh churn when opening notes by ignoring `.obsidian` config/plugin writes in the file tree vault watcher.

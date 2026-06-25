@@ -195,7 +195,7 @@ export function FocusPanel(props: FocusPanelProps) {
 
 function RecentPanel(props: { plugin: FileTreeAlternativePlugin; query: string; openFilePath: (path: string) => Promise<void> }) {
     const { plugin, query, openFilePath } = props;
-    const recentFiles = useMemo(() => getExistingRecentFiles(plugin), [plugin.settings.focusRecentFiles, plugin.app.vault.getFiles().length]);
+    const recentFiles = useMemo(() => getWorkspaceRecentFiles(plugin), [plugin]);
     const visibleFiles = useMemo(() => filterRecentFiles(recentFiles, query), [recentFiles, query]);
 
     if (visibleFiles.length === 0) {
@@ -298,9 +298,19 @@ function EmptyState(props: { title: string; body: string }) {
     );
 }
 
-function getExistingRecentFiles(plugin: FileTreeAlternativePlugin): FocusRecentFileEntry[] {
-    const existingPaths = new Set(plugin.app.vault.getFiles().map((file) => file.path));
-    return plugin.settings.focusRecentFiles.filter((entry) => existingPaths.has(entry.path));
+function getWorkspaceRecentFiles(plugin: FileTreeAlternativePlugin): FocusRecentFileEntry[] {
+    const recentPaths = typeof plugin.app.workspace.getLastOpenFiles === 'function' ? plugin.app.workspace.getLastOpenFiles() : [];
+
+    return recentPaths
+        .map((path) => plugin.app.vault.getAbstractFileByPath(path))
+        .filter((file): file is TFile => file instanceof TFile && ['md', 'canvas'].includes(file.extension.toLowerCase()))
+        .map((file) => ({
+            path: file.path,
+            basename: file.basename,
+            extension: file.extension.toLowerCase(),
+            timestamp: file.stat.mtime,
+        }))
+        .slice(0, plugin.settings.focusMaxRecentFiles);
 }
 
 function filterRecentFiles(recentFiles: FocusRecentFileEntry[], query: string): FocusRecentFileEntry[] {

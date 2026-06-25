@@ -1,4 +1,4 @@
-import { Plugin, addIcon, TAbstractFile, Notice, TFile } from 'obsidian';
+import { Plugin, addIcon, TAbstractFile, Notice } from 'obsidian';
 import { FileTreeView } from './FileTreeView';
 import { ZoomInIcon, ZoomOutIcon, ZoomOutDoubleIcon, LocationIcon, SpaceIcon } from './utils/icons';
 import { FileTreeAlternativePluginSettings, FileTreeAlternativePluginSettingsTab, DEFAULT_SETTINGS } from './settings';
@@ -8,7 +8,6 @@ import { getBookmarkTitle } from 'utils/Utils';
 export default class FileTreeAlternativePlugin extends Plugin {
     settings: FileTreeAlternativePluginSettings;
     ribbonIconEl: HTMLElement | undefined = undefined;
-    focusRecentSaveTimer: number | null = null;
 
     keys = {
         activeFolderPathKey: 'fjgFileFocus-ActiveFolderPath',
@@ -113,12 +112,6 @@ export default class FileTreeAlternativePlugin extends Plugin {
         this.app.vault.on('modify', this.onModify);
         this.app.vault.on('rename', this.onRename);
 
-        this.registerEvent(
-            this.app.workspace.on('file-open', (file) => {
-                if (file instanceof TFile) this.recordFocusRecentFile(file);
-            })
-        );
-
         // Ribbon Icon For Opening
         this.refreshIconRibbon();
     }
@@ -131,11 +124,6 @@ export default class FileTreeAlternativePlugin extends Plugin {
         this.app.vault.off('delete', this.onDelete);
         this.app.vault.off('modify', this.onModify);
         this.app.vault.off('rename', this.onRename);
-        if (this.focusRecentSaveTimer !== null) {
-            window.clearTimeout(this.focusRecentSaveTimer);
-            this.focusRecentSaveTimer = null;
-            void this.saveSettings();
-        }
         this.bookmarksRemoveEventListener();
     }
 
@@ -145,41 +133,10 @@ export default class FileTreeAlternativePlugin extends Plugin {
         this.settings.focusMaxRecentFiles = Number.isFinite(this.settings.focusMaxRecentFiles)
             ? Math.max(1, this.settings.focusMaxRecentFiles)
             : DEFAULT_SETTINGS.focusMaxRecentFiles;
-        this.settings.focusRecentFiles = Array.isArray(this.settings.focusRecentFiles) ? this.settings.focusRecentFiles : [];
     }
 
     async saveSettings() {
         await this.saveData(this.settings);
-    }
-
-    recordFocusRecentFile(file: TFile) {
-        const extension = file.extension.toLowerCase();
-        if (!['md', 'canvas'].includes(extension)) return;
-
-        const existingFirst = this.settings.focusRecentFiles[0];
-        if (existingFirst?.path === file.path && existingFirst.basename === file.basename && existingFirst.extension === extension) return;
-
-        const nextRecent = {
-            path: file.path,
-            basename: file.basename,
-            extension,
-            timestamp: Date.now(),
-        };
-
-        this.settings.focusRecentFiles = [
-            nextRecent,
-            ...this.settings.focusRecentFiles.filter((entry) => entry.path !== file.path),
-        ].slice(0, this.settings.focusMaxRecentFiles);
-
-        this.scheduleFocusRecentSave();
-    }
-
-    scheduleFocusRecentSave() {
-        if (this.focusRecentSaveTimer !== null) window.clearTimeout(this.focusRecentSaveTimer);
-        this.focusRecentSaveTimer = window.setTimeout(async () => {
-            this.focusRecentSaveTimer = null;
-            await this.saveSettings();
-        }, 1000);
     }
 
     openFocusPanel = async (view: FileTreeViewMode) => {
