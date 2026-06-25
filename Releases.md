@@ -1,5 +1,9 @@
 # Releases
 
+## 0.1.4
+
+- Added `jpg`, `jpeg`, and `png` to the supported file type filter.
+
 ## 0.1.3
 
 - Added a File Pane setting to only show supported document file types.
