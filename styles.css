@@ -600,7 +600,7 @@ svg.oz-folder-toggle path {
 .fjg-focus-panel__context-row {
     display: grid;
     width: 100%;
-    min-height: 38px;
+    min-height: 34px;
     align-items: center;
     border: 1px solid transparent;
     border-radius: 5px;
@@ -611,9 +611,9 @@ svg.oz-folder-toggle path {
 }
 
 .fjg-focus-panel__row {
-    grid-template-columns: 22px minmax(0, 1fr);
-    gap: 6px;
-    padding: 4px 6px;
+    grid-template-columns: 18px minmax(0, 1fr);
+    gap: 5px;
+    padding: 3px 5px;
 }
 
 .fjg-focus-panel__context-row {
@@ -633,18 +633,23 @@ svg.oz-folder-toggle path {
 
 .fjg-focus-panel__row-icon {
     display: inline-flex;
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     align-items: center;
     justify-content: center;
     color: var(--text-muted);
+}
+
+.fjg-focus-panel__row-icon svg {
+    width: 14px;
+    height: 14px;
 }
 
 .fjg-focus-panel__row-text {
     display: flex;
     min-width: 0;
     flex-direction: column;
-    gap: 2px;
+    gap: 1px;
 }
 
 .fjg-focus-panel__row-title,
@@ -657,13 +662,14 @@ svg.oz-folder-toggle path {
 
 .fjg-focus-panel__row-title {
     color: var(--text-normal);
-    line-height: 1.25;
+    font-size: var(--oz-fta-folder-font-size);
+    line-height: 1.15;
 }
 
 .fjg-focus-panel__row-subtitle {
     color: var(--text-muted);
-    font-size: var(--font-ui-smaller);
-    line-height: 1.2;
+    font-size: 11px;
+    line-height: 1.1;
 }
 
 .fjg-focus-panel__empty {
