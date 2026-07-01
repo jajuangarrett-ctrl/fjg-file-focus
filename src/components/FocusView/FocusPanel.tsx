@@ -279,7 +279,7 @@ function FocusRow(config: FocusRowConfig) {
     return (
         <button type="button" className="fjg-focus-panel__row" onClick={config.onClick}>
             <span className="fjg-focus-panel__row-icon">
-                <Icon size={15} />
+                <Icon size={13} />
             </span>
             <span className="fjg-focus-panel__row-text">
                 <span className="fjg-focus-panel__row-title">{config.title || 'Untitled'}</span>
