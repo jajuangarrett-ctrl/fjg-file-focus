@@ -1,5 +1,9 @@
 # Releases
 
+## 0.1.6
+
+- Matched the approved compact preview for Recent Notes and Bookmarks rows with smaller fixed row text, smaller icons, and shorter row spacing.
+
 ## 0.1.5
 
 - Reduced Recent Notes and Bookmarks row text by applying the file tree font-size settings directly to row titles and subtitles.
