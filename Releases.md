@@ -1,5 +1,9 @@
 # Releases
 
+## 0.1.5
+
+- Reduced Recent Notes and Bookmarks row text by applying the file tree font-size settings directly to row titles and subtitles.
+
 ## 0.1.4
 
 - Added `jpg`, `jpeg`, and `png` to the supported file type filter.

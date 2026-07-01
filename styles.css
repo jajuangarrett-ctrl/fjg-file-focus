@@ -657,13 +657,14 @@ svg.oz-folder-toggle path {
 
 .fjg-focus-panel__row-title {
     color: var(--text-normal);
-    line-height: 1.25;
+    font-size: var(--oz-fta-folder-font-size);
+    line-height: 1.2;
 }
 
 .fjg-focus-panel__row-subtitle {
     color: var(--text-muted);
-    font-size: var(--font-ui-smaller);
-    line-height: 1.2;
+    font-size: var(--oz-fta-file-font-size);
+    line-height: 1.15;
 }
 
 .fjg-focus-panel__empty {
