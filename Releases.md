@@ -1,5 +1,14 @@
 # Releases
 
+## 0.1.7
+
+- Published the restored FJG File Focus toolbar build as the latest GitHub version.
+- Added Omnisearch and Auto Title toolbar command buttons.
+- Added Semantic Graph Builder and copy-path toolbar buttons for selected notes.
+- Added the colorful folders setting with parent color carry-through to subfolders and files.
+- Changed the new-folder toolbar action to create folders inside the current folder.
+- Kept bookmarked folders drilling down inside FJG File Focus instead of opening the stock file explorer.
+
 ## 0.1.6
 
 - Matched the approved compact preview for Recent Notes and Bookmarks rows with smaller fixed row text, smaller icons, and shorter row spacing.

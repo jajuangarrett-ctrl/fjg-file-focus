@@ -1,7 +1,7 @@
 {
     "id": "fjg-file-focus",
     "name": "FJG File Focus",
-    "version": "0.1.6",
+    "version": "0.1.7",
     "minAppVersion": "0.15.0",
     "description": "A Franklin Garrett file focus sidebar with file tree navigation, recent notes, and bookmarks.",
     "author": "Franklin Garrett",
