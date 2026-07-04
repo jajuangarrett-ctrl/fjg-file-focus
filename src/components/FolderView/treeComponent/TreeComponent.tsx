@@ -6,6 +6,7 @@ import { getFolderIcon, IoMdArrowDropright } from 'utils/icons';
 import * as recoilState from 'recoil/pluginState';
 import { useRecoilState } from 'recoil';
 import useLongPress from 'hooks/useLongPress';
+import { getColorfulFolderClassName, getColorfulFolderContentsClassName } from 'utils/Utils';
 
 type TreeProps = {
     open?: boolean;
@@ -36,6 +37,8 @@ export default function Tree(props: TreeProps) {
     const [highlight, setHightlight] = useState<boolean>(false);
 
     const isFolderActive = props.folder.path === activeFolderPath;
+    const colorfulFolderClassName = getColorfulFolderClassName(props.folder.path, props.plugin);
+    const colorfulFolderContentsClassName = getColorfulFolderContentsClassName(props.folder.path, props.plugin);
 
     // --> For state update from outside of the component
     useEffect(() => setOpen(props.open), [props.open]);
@@ -150,7 +153,12 @@ export default function Tree(props: TreeProps) {
                         onDragLeave={() => setHightlight(false)}>
                         <div
                             {...getRootProps({ className: 'dropzone' })}
-                            className={'oz-folder-element' + (highlight ? ' drag-entered' : '')}
+                            className={
+                                'oz-folder-element' +
+                                colorfulFolderClassName +
+                                (highlight ? ' drag-entered' : '') +
+                                (isFolderActive ? ' is-folder-active' : '')
+                            }
                             data-path={props.folder.path}>
                             <input {...getInputProps()} />
 
@@ -190,7 +198,7 @@ export default function Tree(props: TreeProps) {
                     </div>
                     {props.children && (
                         <div
-                            className="oz-folder-contents"
+                            className={'oz-folder-contents' + colorfulFolderContentsClassName}
                             style={{
                                 height: open ? 'auto' : 0,
                                 opacity: open ? 1 : 0,

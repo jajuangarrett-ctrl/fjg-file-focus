@@ -8,7 +8,6 @@ import { useRecoilState } from 'recoil';
 import {
     AppWithInternalPlugins,
     CoreBookmarksPluginInstance,
-    CoreFileExplorerPluginInstance,
     CoreGlobalSearchPluginInstance,
     CoreWebViewerPluginInstance,
     FocusBookmarkItem,
@@ -83,7 +82,7 @@ export function FocusPanel(props: FocusPanelProps) {
                     await openFilePath(bookmark.path || '', bookmark.subpath);
                     break;
                 case 'folder':
-                    await openFolderBookmark(bookmark, bookmarksPlugin);
+                    openFolderBookmark(bookmark);
                     break;
                 case 'search':
                     await openSearchBookmark(bookmark, bookmarksPlugin);
@@ -102,17 +101,15 @@ export function FocusPanel(props: FocusPanelProps) {
         }
     };
 
-    const openFolderBookmark = async (bookmark: FocusBookmarkItem, bookmarksPlugin: CoreBookmarksPluginInstance) => {
+    const openFolderBookmark = (bookmark: FocusBookmarkItem) => {
         const folder = plugin.app.vault.getAbstractFileByPath(bookmark.path || '');
-        const fileExplorerPlugin = getEnabledPlugin<CoreFileExplorerPluginInstance>(plugin, 'file-explorer');
 
         if (folder instanceof TFolder) {
-            if (fileExplorerPlugin) fileExplorerPlugin.revealInFolder(folder);
             revealFolder(folder);
             return;
         }
 
-        await bookmarksPlugin.openBookmark(bookmark, plugin.settings.focusOpenInNewTab ? 'tab' : false, { focus: true });
+        new Notice(`Folder not found: ${bookmark.path || 'Untitled'}`);
     };
 
     const openSearchBookmark = async (bookmark: FocusBookmarkItem, bookmarksPlugin: CoreBookmarksPluginInstance) => {
@@ -195,7 +192,7 @@ export function FocusPanel(props: FocusPanelProps) {
 
 function RecentPanel(props: { plugin: FileTreeAlternativePlugin; query: string; openFilePath: (path: string) => Promise<void> }) {
     const { plugin, query, openFilePath } = props;
-    const recentFiles = useMemo(() => getWorkspaceRecentFiles(plugin), [plugin]);
+    const recentFiles = useMemo(() => getWorkspaceRecentFiles(plugin), [plugin, plugin.settings.excludedFolders, plugin.settings.focusMaxRecentFiles]);
     const visibleFiles = useMemo(() => filterRecentFiles(recentFiles, query), [recentFiles, query]);
 
     if (visibleFiles.length === 0) {
@@ -300,10 +297,12 @@ function EmptyState(props: { title: string; body: string }) {
 
 function getWorkspaceRecentFiles(plugin: FileTreeAlternativePlugin): FocusRecentFileEntry[] {
     const recentPaths = typeof plugin.app.workspace.getLastOpenFiles === 'function' ? plugin.app.workspace.getLastOpenFiles() : [];
+    const excludedFolders = FileTreeUtils.settingListToArray(plugin.settings.excludedFolders);
 
     return recentPaths
         .map((path) => plugin.app.vault.getAbstractFileByPath(path))
         .filter((file): file is TFile => file instanceof TFile && ['md', 'canvas'].includes(file.extension.toLowerCase()))
+        .filter((file) => !FileTreeUtils.isPathInExcludedFolder(file.path, excludedFolders))
         .map((file) => ({
             path: file.path,
             basename: file.basename,

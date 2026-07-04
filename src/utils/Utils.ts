@@ -73,16 +73,84 @@ export const shouldExcludeFile = (params: {
     if (plugin.settings.showOnlySupportedFileTypes && !SUPPORTED_FILE_EXTENSIONS.has(extension)) return true;
     if (excludedExtensions.map((excluded) => excluded.toLowerCase()).includes(extension)) return true;
     if (plugin.settings.hideAttachments && file.path.toLowerCase().includes(plugin.settings.attachmentsFolderName.toLowerCase())) return true;
-    if (excludedFolders.includes(file.parent.path)) return true;
+    if (isPathInExcludedFolder(file.path, excludedFolders)) return true;
 
     return false;
 };
 
-const settingListToArray = (value: string): string[] => {
+export const settingListToArray = (value: string): string[] => {
     return value
         .split(',')
         .map((item) => item.trim())
         .filter(Boolean);
+};
+
+export const isPathInExcludedFolder = (path: string, excludedFolders: string[]): boolean => {
+    const normalizedPath = normalizeVaultPath(path);
+    return excludedFolders.some((folder) => {
+        const normalizedFolder = normalizeVaultPath(folder);
+        return normalizedFolder !== '' && (normalizedPath === normalizedFolder || normalizedPath.startsWith(`${normalizedFolder}/`));
+    });
+};
+
+const normalizeVaultPath = (path: string): string => {
+    return path.replace(/^\/+|\/+$/g, '');
+};
+
+export const getColorfulFolderClassName = (folderPath: string, plugin: FileTreeAlternativePlugin): string => {
+    if (!plugin.settings.colorfulFolders) return '';
+
+    const normalizedPath = normalizeVaultPath(folderPath);
+    const pathParts = normalizedPath.split('/').filter(Boolean);
+    if (pathParts.length === 0) return ' oz-folder-colorful oz-folder-colorful-root oz-folder-colorful-0';
+
+    const rootFolderName = pathParts[0];
+    const colorIndex = getRootFolderColorIndex(rootFolderName, plugin);
+    const depthClass = pathParts.length === 1 ? 'oz-folder-colorful-root' : 'oz-folder-colorful-child';
+
+    return ` oz-folder-colorful ${depthClass} oz-folder-colorful-${colorIndex}`;
+};
+
+export const getColorfulFolderContentsClassName = (folderPath: string, plugin: FileTreeAlternativePlugin): string => {
+    if (!plugin.settings.colorfulFolders) return '';
+
+    return ` oz-folder-contents-colorful ${getColorfulColorClassName(folderPath, plugin)}`;
+};
+
+export const getColorfulFileClassName = (file: OZFile, plugin: FileTreeAlternativePlugin): string => {
+    if (!plugin.settings.colorfulFolders) return '';
+
+    return ` oz-file-colorful ${getColorfulColorClassName(file.parent.path, plugin)}`;
+};
+
+export const getColorfulHeaderClassName = (folderPath: string, plugin: FileTreeAlternativePlugin): string => {
+    if (!plugin.settings.colorfulFolders) return '';
+
+    return ` oz-file-tree-header-colorful ${getColorfulColorClassName(folderPath, plugin)}`;
+};
+
+const getColorfulColorClassName = (folderPath: string, plugin: FileTreeAlternativePlugin): string => {
+    const normalizedPath = normalizeVaultPath(folderPath);
+    const pathParts = normalizedPath.split('/').filter(Boolean);
+    if (pathParts.length === 0) return 'oz-folder-colorful-0';
+
+    const rootFolderName = pathParts[0];
+    return `oz-folder-colorful-${getRootFolderColorIndex(rootFolderName, plugin)}`;
+};
+
+const getRootFolderColorIndex = (rootFolderName: string, plugin: FileTreeAlternativePlugin): number => {
+    const rootFolders = plugin.app.vault
+        .getRoot()
+        .children.filter((child): child is TFolder => child instanceof TFolder)
+        .sort((a, b) => a.name.localeCompare(b.name, 'en', { numeric: true }));
+    const folderIndex = rootFolders.findIndex((folder) => folder.name === rootFolderName);
+    const sourceIndex = folderIndex >= 0 ? folderIndex : hashFolderName(rootFolderName);
+
+    return sourceIndex % 12;
+};
+
+const hashFolderName = (folderName: string): number => {
+    return folderName.split('').reduce((hash, character) => hash + character.charCodeAt(0), 0);
 };
 
 // Converted from TFile to OZFile
@@ -118,8 +186,8 @@ export const createFolderTree = (params: { startFolder: TFolder; excludedFolders
             if (child instanceof TFolder) {
                 let childFolder: TFolder = child as TFolder;
                 if (
-                    (plugin.settings.hideAttachments && childFolder.name === plugin.settings.attachmentsFolderName) ||
-                    (excludedFolders.length > 0 && excludedFolders.contains(child.path))
+                    (plugin.settings.hideAttachments && child.path.toLowerCase().includes(plugin.settings.attachmentsFolderName.toLowerCase())) ||
+                    (excludedFolders.length > 0 && isPathInExcludedFolder(child.path, excludedFolders))
                 ) {
                     continue;
                 }

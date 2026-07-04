@@ -218,6 +218,34 @@ settings:
     border-bottom: 1px solid var(--divider-color);
 }
 
+.oz-file-tree-header.oz-file-tree-header-colorful {
+    background-color: rgba(var(--fjg-file-focus-folder-rgb), 0.4);
+    border-radius: 7px;
+    color: var(--text-normal);
+}
+
+.oz-nav-file.oz-file-colorful {
+    background-color: rgba(var(--fjg-file-focus-folder-rgb), 0.2);
+    border-bottom-color: rgba(var(--fjg-file-focus-folder-rgb), 0.16);
+    border-radius: 5px;
+    margin: 2px 2px 3px 0px;
+    padding: 0px 3px;
+}
+
+.oz-nav-file.oz-file-colorful .oz-nav-file-title {
+    background: transparent;
+    border-color: transparent;
+    color: var(--text-normal);
+}
+
+.oz-nav-file.oz-file-colorful:hover,
+.oz-nav-file.oz-file-colorful.is-active,
+.oz-nav-file.oz-file-colorful.is-active .oz-nav-file-title,
+.oz-nav-file.oz-file-colorful.is-active .oz-nav-file-title-content {
+    background-color: rgba(var(--fjg-file-focus-folder-rgb), 0.48);
+    color: var(--text-normal);
+}
+
 div.oz-nav-file.is-active,
 div.oz-nav-file.is-active div.oz-nav-file-title,
 div.oz-nav-file.is-active div.oz-nav-file-title-content {
@@ -304,6 +332,16 @@ div.workspace-leaf-content[data-type='fjg-file-focus-view'] > div.view-content {
     margin-left: 5px !important;
 }
 
+.oz-folder-contents.oz-folder-contents-colorful {
+    background-color: rgba(var(--fjg-file-focus-folder-rgb), 0.16);
+    border-left-color: rgba(var(--fjg-file-focus-folder-rgb), 0.85);
+    border-radius: 0px 0px 7px 7px;
+    margin-top: -3px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    padding-right: 2px;
+}
+
 .oz-folder-toggle {
     width: 1em;
     height: 1em;
@@ -367,6 +405,91 @@ div.oz-folder-name.is-root-folder {
 .oz-folder-element {
     line-height: 1.4em;
     padding: 0px 0px 0px 0px;
+}
+
+.oz-folder-element.oz-folder-colorful {
+    --fjg-file-focus-folder-alpha: 0.28;
+    background-color: rgba(var(--fjg-file-focus-folder-rgb), var(--fjg-file-focus-folder-alpha));
+    border-radius: 7px;
+    box-sizing: border-box;
+    color: var(--text-normal);
+    margin: 2px 2px 3px 0px;
+    padding: 1px 4px 1px 3px;
+    transition:
+        background-color 120ms ease,
+        color 120ms ease;
+}
+
+.oz-folder-element.oz-folder-colorful-root {
+    --fjg-file-focus-folder-alpha: 0.68;
+}
+
+.oz-folder-element.oz-folder-colorful-child {
+    --fjg-file-focus-folder-alpha: 0.28;
+}
+
+.oz-folder-element.oz-folder-colorful:hover,
+.oz-folder-element.oz-folder-colorful.drag-entered,
+.oz-folder-element.oz-folder-colorful.is-folder-active {
+    background-color: rgba(var(--fjg-file-focus-folder-rgb), 0.82);
+}
+
+.oz-folder-element.oz-folder-colorful .oz-folder-name,
+.oz-folder-element.oz-folder-colorful .oz-folder-toggle {
+    color: var(--text-normal);
+}
+
+.oz-folder-element.oz-folder-colorful .oz-folder-toggle path {
+    fill: var(--text-normal) !important;
+}
+
+/* Bundled Pastel Dreams palette copied from the vault's Colorful Folders setup. */
+.oz-folder-colorful-0 {
+    --fjg-file-focus-folder-rgb: 255, 179, 186;
+}
+
+.oz-folder-colorful-1 {
+    --fjg-file-focus-folder-rgb: 255, 223, 186;
+}
+
+.oz-folder-colorful-2 {
+    --fjg-file-focus-folder-rgb: 255, 255, 186;
+}
+
+.oz-folder-colorful-3 {
+    --fjg-file-focus-folder-rgb: 186, 255, 201;
+}
+
+.oz-folder-colorful-4 {
+    --fjg-file-focus-folder-rgb: 186, 225, 255;
+}
+
+.oz-folder-colorful-5 {
+    --fjg-file-focus-folder-rgb: 219, 186, 255;
+}
+
+.oz-folder-colorful-6 {
+    --fjg-file-focus-folder-rgb: 255, 186, 219;
+}
+
+.oz-folder-colorful-7 {
+    --fjg-file-focus-folder-rgb: 250, 218, 221;
+}
+
+.oz-folder-colorful-8 {
+    --fjg-file-focus-folder-rgb: 207, 252, 220;
+}
+
+.oz-folder-colorful-9 {
+    --fjg-file-focus-folder-rgb: 204, 237, 255;
+}
+
+.oz-folder-colorful-10 {
+    --fjg-file-focus-folder-rgb: 240, 217, 255;
+}
+
+.oz-folder-colorful-11 {
+    --fjg-file-focus-folder-rgb: 255, 217, 236;
 }
 
 .oz-folders-tree-wrapper {

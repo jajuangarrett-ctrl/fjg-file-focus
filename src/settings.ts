@@ -9,6 +9,8 @@ export type FolderSortType = 'name' | 'item-number';
 export type DeleteFileOption = 'trash' | 'permanent' | 'system-trash';
 export type EvernoteViewOption = 'Disabled' | 'Horizontal' | 'Vertical';
 
+const DEFAULT_EXCLUDED_FOLDERS = ['AI Team/_codex_task_logs', 'Artifacts/Agent Mission Control/runner-logs'].join(', ');
+
 export interface FileTreeAlternativePluginSettings {
     openViewOnStart: boolean;
     ribbonIcon: boolean;
@@ -24,6 +26,7 @@ export interface FileTreeAlternativePluginSettings {
     hideAttachments: boolean;
     attachmentsFolderName: string;
     folderIcon: FolderIcon;
+    colorfulFolders: boolean;
     folderCount: boolean;
     folderCountOption: string;
     evernoteView: EvernoteViewOption;
@@ -55,10 +58,11 @@ export const DEFAULT_SETTINGS: FileTreeAlternativePluginSettings = {
     showFilesFromSubFoldersButton: true,
     revealActiveFileButton: false,
     excludedExtensions: '',
-    excludedFolders: '',
+    excludedFolders: DEFAULT_EXCLUDED_FOLDERS,
     hideAttachments: false,
     attachmentsFolderName: 'attachments',
     folderIcon: 'default',
+    colorfulFolders: false,
     folderCount: true,
     folderCountOption: 'notes',
     evernoteView: 'Vertical',
@@ -229,6 +233,17 @@ export class FileTreeAlternativePluginSettingsTab extends PluginSettingTab {
                         this.refreshView();
                     });
             });
+
+        new Setting(containerEl)
+            .setName('Colorful folders')
+            .setDesc('Use the bundled Pastel Dreams folder colors inside the FJG File Focus folder pane.')
+            .addToggle((toggle) =>
+                toggle.setValue(this.plugin.settings.colorfulFolders).onChange((value) => {
+                    this.plugin.settings.colorfulFolders = value;
+                    this.plugin.saveSettings();
+                    this.refreshView();
+                })
+            );
 
         new Setting(containerEl)
             .setName('Show Root Folder')

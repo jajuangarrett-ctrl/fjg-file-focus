@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { Notice } from 'obsidian';
 import Dropzone from 'react-dropzone';
 import * as Icons from 'utils/icons';
 import FileTreeAlternativePlugin from 'main';
@@ -15,6 +16,9 @@ interface FilesProps {
     plugin: FileTreeAlternativePlugin;
 }
 
+const SEMANTIC_LINK_SUGGESTIONS_COMMAND_ID = 'semantic-graph-builder:open-link-suggestions';
+const AUTO_TITLE_COMMAND_ID = 'auto-title:generate-title';
+
 export function FileComponent(props: FilesProps) {
     let searchInput = React.useRef<HTMLInputElement>(null);
     const plugin = props.plugin;
@@ -28,12 +32,14 @@ export function FileComponent(props: FilesProps) {
     const [excludedFolders] = useRecoilState(recoilState.excludedFolders);
     const [showSubFolders, setShowSubFolders] = useRecoilState(recoilState.showSubFolders);
     const [focusedFolder, _setFocusedFolder] = useRecoilState(recoilState.focusedFolder);
+    const [activeOzFile] = useRecoilState(recoilState.activeOZFile);
 
     // Local States
     const [highlight, setHighlight] = useState<boolean>(false);
     const [searchPhrase, setSearchPhrase] = useState<string>('');
     const [searchBoxVisible, setSearchBoxVisible] = useState<boolean>(false);
     const [treeHeader, setTreeHeader] = useState<string>(Util.getFolderName(activeFolderPath, plugin.app));
+    const colorfulHeaderClassName = Util.getColorfulHeaderClassName(activeFolderPath, plugin);
 
     // Force Update
     const forceUpdate = useForceUpdate();
@@ -94,6 +100,39 @@ export function FileComponent(props: FilesProps) {
         setShowSubFolders(!showSubFolders);
     };
 
+    const copySelectedVaultFilePath = async () => {
+        const activeFile = plugin.app.workspace.getActiveFile();
+        const filePath = activeOzFile?.path || activeFile?.path;
+
+        if (!filePath) {
+            new Notice('Select a note first.');
+            return;
+        }
+
+        try {
+            await navigator.clipboard.writeText(filePath);
+            new Notice(`Copied file path: ${filePath}`);
+        } catch (error) {
+            new Notice(`Could not copy file path: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    };
+
+    const executeCommandById = (commandId: string, unavailableNotice: string) => {
+        const commands = (plugin.app as any).commands;
+
+        if (!commands?.commands?.[commandId] || !commands?.executeCommandById) {
+            new Notice(unavailableNotice);
+            return;
+        }
+
+        commands.executeCommandById(commandId);
+    };
+
+    const openSemanticLinkSuggestions = () =>
+        executeCommandById(SEMANTIC_LINK_SUGGESTIONS_COMMAND_ID, 'Semantic Graph Builder command is not available.');
+
+    const generateAutoTitle = () => executeCommandById(AUTO_TITLE_COMMAND_ID, 'Auto Title command is not available.');
+
     const topIconSize = 19;
 
     return (
@@ -144,6 +183,23 @@ export function FileComponent(props: FilesProps) {
                                                 />
                                             </div>
                                         )}
+                                        <div className="oz-nav-action-button">
+                                            <Icons.MdTitle onClick={generateAutoTitle} size={topIconSize} aria-label="Generate Auto Title" />
+                                        </div>
+                                        <div className="oz-nav-action-button">
+                                            <Icons.FaProjectDiagram
+                                                onClick={openSemanticLinkSuggestions}
+                                                size={topIconSize - 1}
+                                                aria-label="Open Semantic Link Suggestions"
+                                            />
+                                        </div>
+                                        <div className="oz-nav-action-button">
+                                            <Icons.BiCopy
+                                                onClick={() => void copySelectedVaultFilePath()}
+                                                size={topIconSize}
+                                                aria-label="Copy Selected Note File Path"
+                                            />
+                                        </div>
                                         {plugin.settings.showFilesFromSubFoldersButton && (
                                             <div className="oz-nav-action-button">
                                                 {showSubFolders ? (
@@ -215,7 +271,7 @@ export function FileComponent(props: FilesProps) {
                                     </div>
                                 )}
 
-                                <div className="oz-file-tree-header">{treeHeader}</div>
+                                <div className={'oz-file-tree-header' + colorfulHeaderClassName}>{treeHeader}</div>
                             </div>
                             {/* End: Header */}
 
@@ -292,10 +348,11 @@ const NavFile = (props: { file: OZFile; plugin: FileTreeAlternativePlugin }) => 
     const fileDisplayName = useMemo(() => {
         return plugin.settings.showFileNameAsFullPath ? Util.getFileNameAndExtension(file.path).fileName : file.basename;
     }, [plugin.settings.showFileNameAsFullPath, file.path]);
+    const colorfulFileClassName = Util.getColorfulFileClassName(file, plugin);
 
     return (
         <div
-            className={'oz-nav-file' + (activeOzFile && activeOzFile.path === file.path ? ' is-active' : '')}
+            className={'oz-nav-file' + colorfulFileClassName + (activeOzFile && activeOzFile.path === file.path ? ' is-active' : '')}
             key={file.path}
             draggable
             onDragStart={(e) =>

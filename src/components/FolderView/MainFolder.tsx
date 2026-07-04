@@ -5,7 +5,7 @@ import ConditionalRootFolderWrapper from 'components/FolderView/ConditionalWrapp
 import { useRecoilState } from 'recoil';
 import * as recoilState from 'recoil/pluginState';
 import { NestedFolders } from 'components/FolderView/NestedFolders';
-import { TFolder, Menu } from 'obsidian';
+import { TFolder, Menu, Notice } from 'obsidian';
 import { VaultChangeModal } from 'modals';
 import * as Icons from 'utils/icons';
 import { FolderSortType } from 'settings';
@@ -16,6 +16,8 @@ interface FolderProps {
     plugin: FileTreeAlternativePlugin;
 }
 
+const OMNISEARCH_COMMAND_ID = 'omnisearch:show-modal';
+
 export function MainFolder(props: FolderProps) {
     const treeStyles = { color: 'var(--text-muted)', fill: '#c16ff7', width: '100%' };
     const plugin = props.plugin;
@@ -23,11 +25,12 @@ export function MainFolder(props: FolderProps) {
     const rootFolder = app.vault.getRoot();
 
     // Global States
-    const [_activeFolderPath, setActiveFolderPath] = useRecoilState(recoilState.activeFolderPath);
+    const [activeFolderPath, setActiveFolderPath] = useRecoilState(recoilState.activeFolderPath);
     const [view, setView] = useRecoilState(recoilState.view);
     const [folderTree] = useRecoilState(recoilState.folderTree);
     const [focusedFolder, setFocusedFolder] = useRecoilState(recoilState.focusedFolder);
     const [_openFolders, setOpenFolders] = useRecoilState(recoilState.openFolders);
+    const [activeOzFile] = useRecoilState(recoilState.activeOZFile);
 
     // Force Update
     const forceUpdate = useForceUpdate();
@@ -44,6 +47,16 @@ export function MainFolder(props: FolderProps) {
     const createFolder = (underFolder: TFolder) => {
         let vaultChangeModal = new VaultChangeModal(plugin, underFolder, 'create folder');
         vaultChangeModal.open();
+    };
+
+    const createFolderInCurrentFolder = () => {
+        const activeFolder = activeFolderPath ? app.vault.getAbstractFileByPath(activeFolderPath) : null;
+        if (activeFolder instanceof TFolder) {
+            createFolder(activeFolder);
+            return;
+        }
+
+        createFolder(focusedFolder instanceof TFolder ? focusedFolder : rootFolder);
     };
 
     const handleRootFolderContextMenu = (event: MouseEvent, folder: TFolder) => {
@@ -137,6 +150,35 @@ export function MainFolder(props: FolderProps) {
         return false;
     };
 
+    const openOmnisearch = () => {
+        const commands = (plugin.app as any).commands;
+
+        if (!commands?.commands?.[OMNISEARCH_COMMAND_ID] || !commands?.executeCommandById) {
+            new Notice('Omnisearch command is not available.');
+            return;
+        }
+
+        commands.executeCommandById(OMNISEARCH_COMMAND_ID);
+    };
+
+    const copySelectedVaultFolderPath = async () => {
+        const activeFile = plugin.app.workspace.getActiveFile();
+        const folderPath = activeOzFile?.parent?.path || activeFile?.parent?.path || activeFolderPath;
+
+        if (!folderPath) {
+            new Notice('Select a note first.');
+            return;
+        }
+
+        const copyPath = folderPath === '/' ? '/' : folderPath;
+        try {
+            await navigator.clipboard.writeText(copyPath);
+            new Notice(`Copied folder path: ${copyPath}`);
+        } catch (error) {
+            new Notice(`Could not copy folder path: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    };
+
     const handleFolderNameDoubleClick = (folder: TFolder) => {
         if (!folder.isRoot()) focusOnFolder(folder.parent);
     };
@@ -149,8 +191,14 @@ export function MainFolder(props: FolderProps) {
                 <Icons.MdOutlineCreateNewFolder
                     className="oz-nav-action-button"
                     size={folderActionItemSize}
-                    onClick={(e) => createFolder(plugin.app.vault.getRoot())}
-                    aria-label="Create Folder"
+                    onClick={() => createFolderInCurrentFolder()}
+                    aria-label="Create Folder in Current Folder"
+                />
+                <Icons.IoIosSearch
+                    className="oz-nav-action-button"
+                    size={folderActionItemSize}
+                    onClick={openOmnisearch}
+                    aria-label="Open Omnisearch"
                 />
                 <Icons.CgSortAz
                     className="oz-nav-action-button"
@@ -169,6 +217,12 @@ export function MainFolder(props: FolderProps) {
                     size={folderActionItemSize - 2}
                     onClick={() => openFocusPanel('bookmarks')}
                     aria-label="Bookmarks"
+                />
+                <Icons.BiCopy
+                    className="oz-nav-action-button"
+                    size={folderActionItemSize - 2}
+                    onClick={() => void copySelectedVaultFolderPath()}
+                    aria-label="Copy Selected Note Folder Path"
                 />
                 <Icons.CgChevronDoubleUp
                     className="oz-nav-action-button"
