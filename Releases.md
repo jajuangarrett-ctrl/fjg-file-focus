@@ -1,5 +1,9 @@
 # Releases
 
+## 0.1.8
+
+- Added lower toolbar buttons for Obsidian's native Move current file and Delete current file commands.
+
 ## 0.1.7
 
 - Published the restored FJG File Focus toolbar build as the latest GitHub version.
