@@ -18,6 +18,8 @@ interface FilesProps {
 
 const SEMANTIC_LINK_SUGGESTIONS_COMMAND_ID = 'semantic-graph-builder:open-link-suggestions';
 const AUTO_TITLE_COMMAND_ID = 'auto-title:generate-title';
+const DELETE_CURRENT_FILE_COMMAND_ID = 'app:delete-file';
+const MOVE_CURRENT_FILE_COMMAND_ID = 'file-explorer:move-file';
 
 export function FileComponent(props: FilesProps) {
     let searchInput = React.useRef<HTMLInputElement>(null);
@@ -132,6 +134,8 @@ export function FileComponent(props: FilesProps) {
         executeCommandById(SEMANTIC_LINK_SUGGESTIONS_COMMAND_ID, 'Semantic Graph Builder command is not available.');
 
     const generateAutoTitle = () => executeCommandById(AUTO_TITLE_COMMAND_ID, 'Auto Title command is not available.');
+    const moveCurrentFile = () => executeCommandById(MOVE_CURRENT_FILE_COMMAND_ID, 'Move current file command is not available.');
+    const deleteCurrentFile = () => executeCommandById(DELETE_CURRENT_FILE_COMMAND_ID, 'Delete current file command is not available.');
 
     const topIconSize = 19;
 
@@ -183,6 +187,12 @@ export function FileComponent(props: FilesProps) {
                                                 />
                                             </div>
                                         )}
+                                        <div className="oz-nav-action-button">
+                                            <Icons.FaFolderOpen onClick={moveCurrentFile} size={topIconSize - 1} aria-label="Move Current File" />
+                                        </div>
+                                        <div className="oz-nav-action-button">
+                                            <Icons.FaTrash onClick={deleteCurrentFile} size={topIconSize - 2} aria-label="Delete Current File" />
+                                        </div>
                                         <div className="oz-nav-action-button">
                                             <Icons.MdTitle onClick={generateAutoTitle} size={topIconSize} aria-label="Generate Auto Title" />
                                         </div>
