@@ -1,5 +1,9 @@
 # Releases
 
+## 0.1.9
+
+- Moved the Delete current file button to the left side of the lower toolbar next to the close/back control.
+
 ## 0.1.8
 
 - Added lower toolbar buttons for Obsidian's native Move current file and Delete current file commands.

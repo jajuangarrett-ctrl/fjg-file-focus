@@ -177,6 +177,9 @@ export function FileComponent(props: FilesProps) {
                                             />
                                         )}
                                     </div>
+                                    <div className="oz-nav-action-button">
+                                        <Icons.FaTrash onClick={deleteCurrentFile} size={topIconSize - 2} aria-label="Delete Current File" />
+                                    </div>
                                     <div className="oz-nav-buttons-right-block">
                                         {plugin.settings.revealActiveFileButton && (
                                             <div className="oz-nav-action-button">
@@ -189,9 +192,6 @@ export function FileComponent(props: FilesProps) {
                                         )}
                                         <div className="oz-nav-action-button">
                                             <Icons.FaFolderOpen onClick={moveCurrentFile} size={topIconSize - 1} aria-label="Move Current File" />
-                                        </div>
-                                        <div className="oz-nav-action-button">
-                                            <Icons.FaTrash onClick={deleteCurrentFile} size={topIconSize - 2} aria-label="Delete Current File" />
                                         </div>
                                         <div className="oz-nav-action-button">
                                             <Icons.MdTitle onClick={generateAutoTitle} size={topIconSize} aria-label="Generate Auto Title" />
