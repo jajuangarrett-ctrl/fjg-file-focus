@@ -10,6 +10,7 @@ import { useRecoilState } from 'recoil';
 import useForceUpdate from 'hooks/ForceUpdate';
 import useLongPress from 'hooks/useLongPress';
 import * as FileViewHandlers from 'components/FileView/handlers';
+import { ensureNotePropertiesWithNotice, isMarkdownFile } from 'utils/noteProperties';
 import LazyLoad from 'react-lazy-load';
 
 interface FilesProps {
@@ -252,23 +253,42 @@ export function FileComponent(props: FilesProps) {
         }
     };
 
-    const executeCommandById = (commandId: string, unavailableNotice: string) => {
+    const executeCommandById = async (commandId: string, unavailableNotice: string) => {
         const commands = (plugin.app as any).commands;
 
         if (!commands?.commands?.[commandId] || !commands?.executeCommandById) {
             new Notice(unavailableNotice);
-            return;
+            return false;
         }
 
-        commands.executeCommandById(commandId);
+        await Promise.resolve(commands.executeCommandById(commandId));
+        return true;
     };
 
     const openSemanticLinkSuggestions = () =>
-        executeCommandById(SEMANTIC_LINK_SUGGESTIONS_COMMAND_ID, 'Semantic Graph Builder command is not available.');
+        void executeCommandById(SEMANTIC_LINK_SUGGESTIONS_COMMAND_ID, 'Semantic Graph Builder command is not available.');
 
-    const generateAutoTitle = () => executeCommandById(AUTO_TITLE_COMMAND_ID, 'Auto Title command is not available.');
-    const moveCurrentFile = () => executeCommandById(MOVE_CURRENT_FILE_COMMAND_ID, 'Move current file command is not available.');
-    const deleteCurrentFile = () => executeCommandById(DELETE_CURRENT_FILE_COMMAND_ID, 'Delete current file command is not available.');
+    const generateAutoTitle = async () => {
+        const commandStarted = await executeCommandById(AUTO_TITLE_COMMAND_ID, 'Auto Title command is not available.');
+        if (!commandStarted) return;
+
+        window.setTimeout(() => {
+            const activeFile = plugin.app.workspace.getActiveFile();
+            if (isMarkdownFile(activeFile)) {
+                void ensureNotePropertiesWithNotice(plugin, activeFile);
+            }
+        }, 1200);
+    };
+    const moveCurrentFile = () => void executeCommandById(MOVE_CURRENT_FILE_COMMAND_ID, 'Move current file command is not available.');
+    const deleteCurrentFile = () => void executeCommandById(DELETE_CURRENT_FILE_COMMAND_ID, 'Delete current file command is not available.');
+
+    const refreshCurrentNoteProperties = async () => {
+        const activeFile = plugin.app.workspace.getActiveFile();
+        const selectedPath = activeOzFile?.path || activeFile?.path;
+        const file = selectedPath ? plugin.app.vault.getAbstractFileByPath(selectedPath) : activeFile;
+
+        await ensureNotePropertiesWithNotice(plugin, file);
+    };
 
     const quickFormatCurrentNote = async () => {
         if (quickFormatRunning) {
@@ -392,10 +412,17 @@ export function FileComponent(props: FilesProps) {
                                             </div>
                                         )}
                                         <div className="oz-nav-action-button">
+                                            <Icons.MdLocationOn
+                                                onClick={() => void refreshCurrentNoteProperties()}
+                                                size={topIconSize + 1}
+                                                aria-label="Refresh Note Properties"
+                                            />
+                                        </div>
+                                        <div className="oz-nav-action-button">
                                             <Icons.FaFolderOpen onClick={moveCurrentFile} size={topIconSize - 1} aria-label="Move Current File" />
                                         </div>
                                         <div className="oz-nav-action-button">
-                                            <Icons.MdTitle onClick={generateAutoTitle} size={topIconSize} aria-label="Generate Auto Title" />
+                                            <Icons.MdTitle onClick={() => void generateAutoTitle()} size={topIconSize} aria-label="Generate Auto Title" />
                                         </div>
                                         <div className="oz-nav-action-button">
                                             <Icons.FaProjectDiagram

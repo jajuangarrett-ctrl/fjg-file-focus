@@ -4,6 +4,7 @@ import { ZoomInIcon, ZoomOutIcon, ZoomOutDoubleIcon, LocationIcon, SpaceIcon } f
 import { FileTreeAlternativePluginSettings, FileTreeAlternativePluginSettingsTab, DEFAULT_SETTINGS } from './settings';
 import { FileTreeViewMode, VaultChange, eventTypes } from 'utils/types';
 import { getBookmarkTitle } from 'utils/Utils';
+import { ensureNoteProperties, ensureNotePropertiesWithNotice, isMarkdownFile } from 'utils/noteProperties';
 
 export default class FileTreeAlternativePlugin extends Plugin {
     settings: FileTreeAlternativePluginSettings;
@@ -65,6 +66,12 @@ export default class FileTreeAlternativePlugin extends Plugin {
             id: 'open-bookmarks-panel',
             name: 'Open Bookmarks in FJG File Focus',
             callback: async () => await this.openFocusPanel('bookmarks'),
+        });
+
+        this.addCommand({
+            id: 'refresh-note-properties',
+            name: 'Refresh note properties',
+            callback: async () => await ensureNotePropertiesWithNotice(this, this.app.workspace.getActiveFile()),
         });
 
         this.app.workspace.onLayoutReady(() => {
@@ -215,10 +222,32 @@ export default class FileTreeAlternativePlugin extends Plugin {
         return file.path === configDir || file.path.startsWith(`${configDir}/`);
     }
 
-    onCreate = (file: TAbstractFile) => this.triggerVaultChangeEvent(file, 'create', '');
+    onCreate = (file: TAbstractFile) => {
+        this.triggerVaultChangeEvent(file, 'create', '');
+        if (isMarkdownFile(file)) {
+            window.setTimeout(() => {
+                this.ensureManagedNoteProperties(file);
+            }, 500);
+        }
+    };
     onDelete = (file: TAbstractFile) => this.triggerVaultChangeEvent(file, 'delete', '');
     onModify = (file: TAbstractFile) => this.triggerVaultChangeEvent(file, 'modify', '');
-    onRename = (file: TAbstractFile, oldPath: string) => this.triggerVaultChangeEvent(file, 'rename', oldPath);
+    onRename = (file: TAbstractFile, oldPath: string) => {
+        this.triggerVaultChangeEvent(file, 'rename', oldPath);
+        if (isMarkdownFile(file)) {
+            this.ensureManagedNoteProperties(file);
+        }
+    };
+
+    ensureManagedNoteProperties = async (file: TAbstractFile) => {
+        if (!isMarkdownFile(file) || this.isConfigFile(file)) return;
+
+        try {
+            await ensureNoteProperties(this, file);
+        } catch (error) {
+            console.error('FJG File Focus note property update failed:', error);
+        }
+    };
 
     refreshIconRibbon = () => {
         this.ribbonIconEl?.remove();

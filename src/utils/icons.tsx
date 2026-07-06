@@ -17,7 +17,7 @@ import {
 } from 'react-icons/fa';
 import { AiFillFilePdf, AiFillFileImage, AiFillFileWord } from 'react-icons/ai';
 import { IoIosSearch, IoIosEye, IoIosEyeOff, IoIosAddCircle, IoIosCloseCircleOutline, IoIosArrowBack, IoMdArrowDropright } from 'react-icons/io';
-import { MdFormatListBulleted, MdOutlineCreateNewFolder, MdTitle } from 'react-icons/md';
+import { MdFormatListBulleted, MdLocationOn, MdOutlineCreateNewFolder, MdTitle } from 'react-icons/md';
 import { CgChevronDoubleDown, CgChevronDoubleUp, CgSortAz } from 'react-icons/cg';
 
 const MinusSquareO = (props: any) => (
@@ -129,6 +129,7 @@ export {
     CgSortAz,
     MdOutlineCreateNewFolder,
     MdFormatListBulleted,
+    MdLocationOn,
     MdTitle,
     BiFile,
     AiFillFilePdf,
