@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Notice, TFile } from 'obsidian';
+import { Notice, TFile, requestUrl } from 'obsidian';
 import Dropzone from 'react-dropzone';
 import * as Icons from 'utils/icons';
 import FileTreeAlternativePlugin from 'main';
@@ -20,70 +20,137 @@ const SEMANTIC_LINK_SUGGESTIONS_COMMAND_ID = 'semantic-graph-builder:open-link-s
 const AUTO_TITLE_COMMAND_ID = 'auto-title:generate-title';
 const DELETE_CURRENT_FILE_COMMAND_ID = 'app:delete-file';
 const MOVE_CURRENT_FILE_COMMAND_ID = 'file-explorer:move-file';
-const FENCED_CODE_BLOCK_PATTERN = /^(```|~~~)/;
-const MARKDOWN_STRUCTURE_PATTERN = /^(\s{0,3}(#{1,6}\s+|[-*+]\s+|\d+[.)]\s+|>\s?|!\[[^\]]*\]\(|\[[^\]]+\]\([^)]+\)|\|.*\||-{3,}\s*$|\*{3,}\s*$|_{3,}\s*$|<[^>]+>))/;
 
-const getFrontmatterEndIndex = (lines: string[]) => {
-    if (lines[0]?.trim() !== '---') return -1;
+const QUICK_FORMAT_SYSTEM_PROMPT = `You are an AI Markdown formatting assistant for Franklin Garrett.
 
-    for (let index = 1; index < lines.length; index++) {
-        if (lines[index].trim() === '---') return index;
-    }
+Your task is to deeply format the user's active Obsidian note into clean Markdown.
 
-    return -1;
+Rules:
+- Preserve every substantive idea, item, name, date, number, folder name, link, instruction, and action item from the source.
+- Do not summarize, shorten, invent, delete, or add unsupported content.
+- Correct obvious spelling, punctuation, capitalization, and spacing errors when the intent is clear.
+- Remove duplicate bullet characters, pasted bullet symbols, broken indentation, and accidental list artifacts.
+- Use one H1 title when the source has a clear title.
+- Use H2 headings for major sections.
+- Use Markdown bullets and nested bullets where they make the note easier to scan.
+- Keep existing Markdown links, wiki links, URLs, tags, tasks, and code blocks intact.
+- Preserve the order of the source unless nearby lines clearly belong under the same heading or nested bullet.
+- Output only the formatted Markdown note. Do not include a preamble, explanation, comments, or a wrapping code fence.`;
+
+interface AIGrammarSettings {
+    provider?: string;
+    apiKey?: string;
+    anthropicModel?: string;
+    openaiModel?: string;
+}
+
+interface AIGrammarPluginInstance {
+    settings?: AIGrammarSettings;
+}
+
+const stripWrappingCodeFence = (content: string) => {
+    const trimmed = content.trim();
+    const match = trimmed.match(/^```(?:markdown|md)?\s*\n([\s\S]*?)\n```\s*$/i);
+    return match ? match[1].trim() : trimmed;
 };
 
-const hasMarkdownHeading = (lines: string[], frontmatterEndIndex: number) => {
-    let inCodeBlock = false;
+const splitFrontmatter = (content: string) => {
+    const match = content.match(/^(---\s*\n[\s\S]*?\n---)(\s*\n)?([\s\S]*)$/);
 
-    for (let index = frontmatterEndIndex + 1; index < lines.length; index++) {
-        const trimmed = lines[index].trim();
-
-        if (FENCED_CODE_BLOCK_PATTERN.test(trimmed)) {
-            inCodeBlock = !inCodeBlock;
-            continue;
-        }
-
-        if (!inCodeBlock && /^#{1,6}\s+\S/.test(trimmed)) return true;
+    if (!match) {
+        return {
+            frontmatter: '',
+            body: content,
+        };
     }
 
-    return false;
+    return {
+        frontmatter: match[1],
+        body: match[3] || '',
+    };
 };
 
-const isStructuredMarkdownLine = (line: string) => MARKDOWN_STRUCTURE_PATTERN.test(line) || /^\s{4,}\S/.test(line);
+const getAIGrammarSettings = (plugin: FileTreeAlternativePlugin) => {
+    const plugins = (plugin.app as any).plugins;
+    const aiGrammarPlugin = plugins?.getPlugin?.('ai-grammar-corrector') as AIGrammarPluginInstance | null | undefined;
+    return aiGrammarPlugin?.settings;
+};
 
-const looksLikeSectionHeading = (line: string) => line.endsWith(':') && line.length <= 80;
+const formatNoteContentWithAI = async (content: string, settings: AIGrammarSettings) => {
+    const { frontmatter, body } = splitFrontmatter(content);
+    const bodyToFormat = body.trim();
 
-const formatNoteContentWithMarkdown = (content: string) => {
-    const lineEnding = content.includes('\r\n') ? '\r\n' : '\n';
-    const lines = content.replace(/\r\n/g, '\n').split('\n');
-    const frontmatterEndIndex = getFrontmatterEndIndex(lines);
-    let noteHasHeading = hasMarkdownHeading(lines, frontmatterEndIndex);
-    let inCodeBlock = false;
+    if (!bodyToFormat) return content;
 
-    const formattedLines = lines.map((line, index) => {
-        if (index <= frontmatterEndIndex) return line;
+    const formattedBody =
+        settings.provider === 'openai'
+            ? await callOpenAIFormatter(bodyToFormat, settings)
+            : await callAnthropicFormatter(bodyToFormat, settings);
+    const cleanedBody = stripWrappingCodeFence(formattedBody);
 
-        const trimmed = line.trim();
+    return frontmatter ? `${frontmatter}\n\n${cleanedBody}\n` : `${cleanedBody}\n`;
+};
 
-        if (FENCED_CODE_BLOCK_PATTERN.test(trimmed)) {
-            inCodeBlock = !inCodeBlock;
-            return line;
-        }
-
-        if (inCodeBlock || trimmed.length === 0 || isStructuredMarkdownLine(line)) return line;
-
-        if (looksLikeSectionHeading(trimmed)) return `## ${trimmed}`;
-
-        if (!noteHasHeading) {
-            noteHasHeading = true;
-            return `# ${trimmed}`;
-        }
-
-        return `- ${trimmed}`;
+const callAnthropicFormatter = async (content: string, settings: AIGrammarSettings) => {
+    const res = await requestUrl({
+        url: 'https://api.anthropic.com/v1/messages',
+        method: 'POST',
+        headers: {
+            'content-type': 'application/json',
+            'x-api-key': settings.apiKey || '',
+            'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+            model: settings.anthropicModel || 'claude-sonnet-4-5',
+            max_tokens: 8192,
+            temperature: 0.2,
+            system: QUICK_FORMAT_SYSTEM_PROMPT,
+            messages: [{ role: 'user', content }],
+        }),
+        throw: false,
     });
 
-    return formattedLines.join(lineEnding);
+    if (res.status === 401) throw new Error('Invalid Anthropic API key (401). Check AI Grammar Corrector settings.');
+    if (res.status === 429) throw new Error('Anthropic rate limit hit (429). Wait a moment and try again.');
+    if (res.status >= 400) {
+        const apiMsg = (res.json?.error?.message as string) || res.text || 'unknown error';
+        throw new Error(`Anthropic API ${res.status}: ${apiMsg}`);
+    }
+
+    const output = res.json?.content?.[0]?.text;
+    if (typeof output !== 'string') throw new Error('Anthropic returned an unexpected response shape.');
+    return output;
+};
+
+const callOpenAIFormatter = async (content: string, settings: AIGrammarSettings) => {
+    const res = await requestUrl({
+        url: 'https://api.openai.com/v1/chat/completions',
+        method: 'POST',
+        headers: {
+            'content-type': 'application/json',
+            authorization: `Bearer ${settings.apiKey || ''}`,
+        },
+        body: JSON.stringify({
+            model: settings.openaiModel || 'gpt-4o-mini',
+            temperature: 0.2,
+            messages: [
+                { role: 'system', content: QUICK_FORMAT_SYSTEM_PROMPT },
+                { role: 'user', content },
+            ],
+        }),
+        throw: false,
+    });
+
+    if (res.status === 401) throw new Error('Invalid OpenAI API key (401). Check AI Grammar Corrector settings.');
+    if (res.status === 429) throw new Error('OpenAI rate limit hit (429). Wait a moment and try again.');
+    if (res.status >= 400) {
+        const apiMsg = (res.json?.error?.message as string) || res.text || 'unknown error';
+        throw new Error(`OpenAI API ${res.status}: ${apiMsg}`);
+    }
+
+    const output = res.json?.choices?.[0]?.message?.content;
+    if (typeof output !== 'string') throw new Error('OpenAI returned an unexpected response shape.');
+    return output;
 };
 
 export function FileComponent(props: FilesProps) {
@@ -105,6 +172,7 @@ export function FileComponent(props: FilesProps) {
     const [highlight, setHighlight] = useState<boolean>(false);
     const [searchPhrase, setSearchPhrase] = useState<string>('');
     const [searchBoxVisible, setSearchBoxVisible] = useState<boolean>(false);
+    const [quickFormatRunning, setQuickFormatRunning] = useState<boolean>(false);
     const [treeHeader, setTreeHeader] = useState<string>(Util.getFolderName(activeFolderPath, plugin.app));
     const colorfulHeaderClassName = Util.getColorfulHeaderClassName(activeFolderPath, plugin);
 
@@ -203,6 +271,11 @@ export function FileComponent(props: FilesProps) {
     const deleteCurrentFile = () => executeCommandById(DELETE_CURRENT_FILE_COMMAND_ID, 'Delete current file command is not available.');
 
     const quickFormatCurrentNote = async () => {
+        if (quickFormatRunning) {
+            new Notice('AI quick format is already running.');
+            return;
+        }
+
         const activeFile = plugin.app.workspace.getActiveFile();
         const selectedPath = activeOzFile?.path || activeFile?.path;
         const file = selectedPath ? plugin.app.vault.getAbstractFileByPath(selectedPath) : activeFile;
@@ -217,16 +290,45 @@ export function FileComponent(props: FilesProps) {
             return;
         }
 
-        const originalContent = await plugin.app.vault.read(file);
-        const formattedContent = formatNoteContentWithMarkdown(originalContent);
+        const aiGrammarSettings = getAIGrammarSettings(plugin);
 
-        if (formattedContent === originalContent) {
-            new Notice('Current note already looks formatted.');
+        if (!aiGrammarSettings) {
+            new Notice('Enable AI Grammar Corrector before using AI quick format.');
             return;
         }
 
-        await plugin.app.vault.modify(file, formattedContent);
-        new Notice('Formatted current note with Markdown.');
+        if (!aiGrammarSettings.apiKey) {
+            new Notice('Add an API key in AI Grammar Corrector settings before using AI quick format.');
+            return;
+        }
+
+        setQuickFormatRunning(true);
+        new Notice('AI formatting current note...');
+
+        try {
+            const originalContent = await plugin.app.vault.read(file);
+            const formattedContent = await formatNoteContentWithAI(originalContent, aiGrammarSettings);
+
+            if (formattedContent === originalContent) {
+                new Notice('Current note already looks formatted.');
+                return;
+            }
+
+            const latestContent = await plugin.app.vault.read(file);
+            if (latestContent !== originalContent) {
+                new Notice('The note changed while AI formatting was running. Nothing was written.');
+                return;
+            }
+
+            await plugin.app.vault.modify(file, formattedContent);
+            new Notice('AI formatted current note with Markdown.');
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            new Notice(`AI quick format failed: ${message}`, 8000);
+            console.error('FJG File Focus AI quick format failed:', error);
+        } finally {
+            setQuickFormatRunning(false);
+        }
     };
 
     const topIconSize = 19;
