@@ -1,5 +1,10 @@
 # Releases
 
+## 0.1.11
+
+- Changed Quick Format to use AI Grammar Corrector's configured AI provider, API key, and model for deeper Markdown formatting.
+- Preserves frontmatter locally, formats the note body with AI, removes duplicate bullet artifacts, and avoids overwriting if the note changes while formatting runs.
+
 ## 0.1.10
 
 - Added a Quick Format current note button between Delete current file and Move current file.
