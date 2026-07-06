@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Notice } from 'obsidian';
+import { Notice, TFile } from 'obsidian';
 import Dropzone from 'react-dropzone';
 import * as Icons from 'utils/icons';
 import FileTreeAlternativePlugin from 'main';
@@ -20,6 +20,71 @@ const SEMANTIC_LINK_SUGGESTIONS_COMMAND_ID = 'semantic-graph-builder:open-link-s
 const AUTO_TITLE_COMMAND_ID = 'auto-title:generate-title';
 const DELETE_CURRENT_FILE_COMMAND_ID = 'app:delete-file';
 const MOVE_CURRENT_FILE_COMMAND_ID = 'file-explorer:move-file';
+const FENCED_CODE_BLOCK_PATTERN = /^(```|~~~)/;
+const MARKDOWN_STRUCTURE_PATTERN = /^(\s{0,3}(#{1,6}\s+|[-*+]\s+|\d+[.)]\s+|>\s?|!\[[^\]]*\]\(|\[[^\]]+\]\([^)]+\)|\|.*\||-{3,}\s*$|\*{3,}\s*$|_{3,}\s*$|<[^>]+>))/;
+
+const getFrontmatterEndIndex = (lines: string[]) => {
+    if (lines[0]?.trim() !== '---') return -1;
+
+    for (let index = 1; index < lines.length; index++) {
+        if (lines[index].trim() === '---') return index;
+    }
+
+    return -1;
+};
+
+const hasMarkdownHeading = (lines: string[], frontmatterEndIndex: number) => {
+    let inCodeBlock = false;
+
+    for (let index = frontmatterEndIndex + 1; index < lines.length; index++) {
+        const trimmed = lines[index].trim();
+
+        if (FENCED_CODE_BLOCK_PATTERN.test(trimmed)) {
+            inCodeBlock = !inCodeBlock;
+            continue;
+        }
+
+        if (!inCodeBlock && /^#{1,6}\s+\S/.test(trimmed)) return true;
+    }
+
+    return false;
+};
+
+const isStructuredMarkdownLine = (line: string) => MARKDOWN_STRUCTURE_PATTERN.test(line) || /^\s{4,}\S/.test(line);
+
+const looksLikeSectionHeading = (line: string) => line.endsWith(':') && line.length <= 80;
+
+const formatNoteContentWithMarkdown = (content: string) => {
+    const lineEnding = content.includes('\r\n') ? '\r\n' : '\n';
+    const lines = content.replace(/\r\n/g, '\n').split('\n');
+    const frontmatterEndIndex = getFrontmatterEndIndex(lines);
+    let noteHasHeading = hasMarkdownHeading(lines, frontmatterEndIndex);
+    let inCodeBlock = false;
+
+    const formattedLines = lines.map((line, index) => {
+        if (index <= frontmatterEndIndex) return line;
+
+        const trimmed = line.trim();
+
+        if (FENCED_CODE_BLOCK_PATTERN.test(trimmed)) {
+            inCodeBlock = !inCodeBlock;
+            return line;
+        }
+
+        if (inCodeBlock || trimmed.length === 0 || isStructuredMarkdownLine(line)) return line;
+
+        if (looksLikeSectionHeading(trimmed)) return `## ${trimmed}`;
+
+        if (!noteHasHeading) {
+            noteHasHeading = true;
+            return `# ${trimmed}`;
+        }
+
+        return `- ${trimmed}`;
+    });
+
+    return formattedLines.join(lineEnding);
+};
 
 export function FileComponent(props: FilesProps) {
     let searchInput = React.useRef<HTMLInputElement>(null);
@@ -137,6 +202,33 @@ export function FileComponent(props: FilesProps) {
     const moveCurrentFile = () => executeCommandById(MOVE_CURRENT_FILE_COMMAND_ID, 'Move current file command is not available.');
     const deleteCurrentFile = () => executeCommandById(DELETE_CURRENT_FILE_COMMAND_ID, 'Delete current file command is not available.');
 
+    const quickFormatCurrentNote = async () => {
+        const activeFile = plugin.app.workspace.getActiveFile();
+        const selectedPath = activeOzFile?.path || activeFile?.path;
+        const file = selectedPath ? plugin.app.vault.getAbstractFileByPath(selectedPath) : activeFile;
+
+        if (!(file instanceof TFile)) {
+            new Notice('Select a note first.');
+            return;
+        }
+
+        if (file.extension.toLowerCase() !== 'md') {
+            new Notice('Quick format only works on Markdown notes.');
+            return;
+        }
+
+        const originalContent = await plugin.app.vault.read(file);
+        const formattedContent = formatNoteContentWithMarkdown(originalContent);
+
+        if (formattedContent === originalContent) {
+            new Notice('Current note already looks formatted.');
+            return;
+        }
+
+        await plugin.app.vault.modify(file, formattedContent);
+        new Notice('Formatted current note with Markdown.');
+    };
+
     const topIconSize = 19;
 
     return (
@@ -179,6 +271,13 @@ export function FileComponent(props: FilesProps) {
                                     </div>
                                     <div className="oz-nav-action-button">
                                         <Icons.FaTrash onClick={deleteCurrentFile} size={topIconSize - 2} aria-label="Delete Current File" />
+                                    </div>
+                                    <div className="oz-nav-action-button">
+                                        <Icons.MdFormatListBulleted
+                                            onClick={() => void quickFormatCurrentNote()}
+                                            size={topIconSize + 1}
+                                            aria-label="Quick Format Current Note"
+                                        />
                                     </div>
                                     <div className="oz-nav-buttons-right-block">
                                         {plugin.settings.revealActiveFileButton && (

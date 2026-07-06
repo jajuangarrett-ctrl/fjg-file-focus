@@ -1,5 +1,10 @@
 # Releases
 
+## 0.1.10
+
+- Added a Quick Format current note button between Delete current file and Move current file.
+- The formatter preserves note content while adding Markdown headings and bullet points to plain text.
+
 ## 0.1.9
 
 - Moved the Delete current file button to the left side of the lower toolbar next to the close/back control.
