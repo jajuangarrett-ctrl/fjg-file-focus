@@ -253,7 +253,7 @@ export function FileComponent(props: FilesProps) {
         }
     };
 
-    const executeCommandById = async (commandId: string, unavailableNotice: string) => {
+    const executeCommandById = async (commandId: string, unavailableNotice: string): Promise<boolean> => {
         const commands = (plugin.app as any).commands;
 
         if (!commands?.commands?.[commandId] || !commands?.executeCommandById) {
@@ -265,8 +265,9 @@ export function FileComponent(props: FilesProps) {
         return true;
     };
 
-    const openSemanticLinkSuggestions = () =>
+    const openSemanticLinkSuggestions = (): void => {
         void executeCommandById(SEMANTIC_LINK_SUGGESTIONS_COMMAND_ID, 'Semantic Graph Builder command is not available.');
+    };
 
     const generateAutoTitle = async () => {
         const commandStarted = await executeCommandById(AUTO_TITLE_COMMAND_ID, 'Auto Title command is not available.');
@@ -279,8 +280,8 @@ export function FileComponent(props: FilesProps) {
             }
         }, 1200);
     };
-    const moveCurrentFile = () => void executeCommandById(MOVE_CURRENT_FILE_COMMAND_ID, 'Move current file command is not available.');
-    const deleteCurrentFile = () => void executeCommandById(DELETE_CURRENT_FILE_COMMAND_ID, 'Delete current file command is not available.');
+    const moveCurrentFile = (): void => void executeCommandById(MOVE_CURRENT_FILE_COMMAND_ID, 'Move current file command is not available.');
+    const deleteCurrentFile = (): void => void executeCommandById(DELETE_CURRENT_FILE_COMMAND_ID, 'Delete current file command is not available.');
 
     const refreshCurrentNoteProperties = async () => {
         const activeFile = plugin.app.workspace.getActiveFile();

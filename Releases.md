@@ -1,5 +1,11 @@
 # Releases
 
+## 0.1.12
+
+- Added a note properties button that refreshes `title`, `location`, and `tags` properties for the active note.
+- Automatically adds managed properties to new Markdown notes and refreshes `location` after Markdown files move or rename.
+- Refreshes managed properties after the FJG Auto Title toolbar action runs.
+
 ## 0.1.11
 
 - Changed Quick Format to use AI Grammar Corrector's configured AI provider, API key, and model for deeper Markdown formatting.
