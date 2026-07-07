@@ -31,11 +31,13 @@ Rules:
 - Do not summarize, shorten, invent, delete, or add unsupported content.
 - Correct obvious spelling, punctuation, capitalization, and spacing errors when the intent is clear.
 - Remove duplicate bullet characters, pasted bullet symbols, broken indentation, and accidental list artifacts.
+- If the source has pasted bullet symbols, partially formatted bullets, hanging wrapped lines, or indented fragments, actively rewrite them into clean Markdown bullets and nested bullets.
 - Use one H1 title when the source has a clear title.
 - Use H2 headings for major sections.
 - Use Markdown bullets and nested bullets where they make the note easier to scan.
 - Keep existing Markdown links, wiki links, URLs, tags, tasks, and code blocks intact.
 - Preserve the order of the source unless nearby lines clearly belong under the same heading or nested bullet.
+- Do not return the source unchanged unless it is already clean, coherent Markdown with headings and properly nested bullets.
 - Output only the formatted Markdown note. Do not include a preamble, explanation, comments, or a wrapping code fence.`;
 
 interface AIGrammarSettings {
@@ -106,7 +108,7 @@ const callAnthropicFormatter = async (content: string, settings: AIGrammarSettin
             max_tokens: 8192,
             temperature: 0.2,
             system: QUICK_FORMAT_SYSTEM_PROMPT,
-            messages: [{ role: 'user', content }],
+            messages: [{ role: 'user', content: `Format this Obsidian note body into clean Markdown:\n\n${content}` }],
         }),
         throw: false,
     });
@@ -136,7 +138,7 @@ const callOpenAIFormatter = async (content: string, settings: AIGrammarSettings)
             temperature: 0.2,
             messages: [
                 { role: 'system', content: QUICK_FORMAT_SYSTEM_PROMPT },
-                { role: 'user', content },
+                { role: 'user', content: `Format this Obsidian note body into clean Markdown:\n\n${content}` },
             ],
         }),
         throw: false,
@@ -331,7 +333,7 @@ export function FileComponent(props: FilesProps) {
             const formattedContent = await formatNoteContentWithAI(originalContent, aiGrammarSettings);
 
             if (formattedContent === originalContent) {
-                new Notice('Current note already looks formatted.');
+                new Notice('AI returned no formatting changes. The note was left unchanged.', 8000);
                 return;
             }
 

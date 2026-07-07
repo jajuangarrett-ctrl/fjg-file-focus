@@ -1,5 +1,10 @@
 # Releases
 
+## 0.1.13
+
+- Strengthened the AI Quick Format prompt for pasted bullet symbols, hanging wrapped lines, and partially formatted notes.
+- Replaced the misleading "already looks formatted" notice with a neutral no-change notice when the AI returns unchanged text.
+
 ## 0.1.12
 
 - Added a note properties button that refreshes `title`, `location`, and `tags` properties for the active note.
