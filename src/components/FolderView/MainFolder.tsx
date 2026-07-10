@@ -17,6 +17,7 @@ interface FolderProps {
 }
 
 const OMNISEARCH_COMMAND_ID = 'omnisearch:show-modal';
+const HTML_VIEWER_VIEW_TYPE = 'html-viewer';
 const VAULT_CONTROL_CENTER_PATH = 'Artifacts/Vault Control Center/vault-control-center.html';
 
 export function MainFolder(props: FolderProps) {
@@ -68,14 +69,15 @@ export function MainFolder(props: FolderProps) {
             return;
         }
 
-        const htmlViewerPlugin = (app as any).plugins?.getPlugin?.('html-viewer');
+        const existingHtmlViewerLeaf = app.workspace.getLeavesOfType(HTML_VIEWER_VIEW_TYPE)[0];
+        const leaf = existingHtmlViewerLeaf || app.workspace.getLeaf(false);
 
-        if (htmlViewerPlugin?.openHtmlFile) {
-            await htmlViewerPlugin.openHtmlFile(file);
-            return;
-        }
-
-        await app.workspace.getLeaf(false).openFile(file);
+        await leaf.setViewState({
+            type: HTML_VIEWER_VIEW_TYPE,
+            state: { file: file.path },
+            active: true,
+        });
+        await app.workspace.revealLeaf(leaf);
     };
 
     const handleRootFolderContextMenu = (event: MouseEvent, folder: TFolder) => {

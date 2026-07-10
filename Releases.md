@@ -1,5 +1,9 @@
 # Releases
 
+## 0.1.15
+
+- Changed the Home button to reuse the existing/current HTML Viewer tab instead of following HTML Viewer's new-tab setting.
+
 ## 0.1.14
 
 - Added a Home button to the folder toolbar that opens `Artifacts/Vault Control Center/vault-control-center.html`.
