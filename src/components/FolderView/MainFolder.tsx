@@ -5,7 +5,7 @@ import ConditionalRootFolderWrapper from 'components/FolderView/ConditionalWrapp
 import { useRecoilState } from 'recoil';
 import * as recoilState from 'recoil/pluginState';
 import { NestedFolders } from 'components/FolderView/NestedFolders';
-import { TFolder, Menu, Notice } from 'obsidian';
+import { TFile, TFolder, Menu, Notice } from 'obsidian';
 import { VaultChangeModal } from 'modals';
 import * as Icons from 'utils/icons';
 import { FolderSortType } from 'settings';
@@ -17,6 +17,7 @@ interface FolderProps {
 }
 
 const OMNISEARCH_COMMAND_ID = 'omnisearch:show-modal';
+const VAULT_CONTROL_CENTER_PATH = 'Artifacts/Vault Control Center/vault-control-center.html';
 
 export function MainFolder(props: FolderProps) {
     const treeStyles = { color: 'var(--text-muted)', fill: '#c16ff7', width: '100%' };
@@ -57,6 +58,24 @@ export function MainFolder(props: FolderProps) {
         }
 
         createFolder(focusedFolder instanceof TFolder ? focusedFolder : rootFolder);
+    };
+
+    const openVaultControlCenter = async () => {
+        const file = app.vault.getAbstractFileByPath(VAULT_CONTROL_CENTER_PATH);
+
+        if (!(file instanceof TFile)) {
+            new Notice(`Vault Control Center not found: ${VAULT_CONTROL_CENTER_PATH}`);
+            return;
+        }
+
+        const htmlViewerPlugin = (app as any).plugins?.getPlugin?.('html-viewer');
+
+        if (htmlViewerPlugin?.openHtmlFile) {
+            await htmlViewerPlugin.openHtmlFile(file);
+            return;
+        }
+
+        await app.workspace.getLeaf(false).openFile(file);
     };
 
     const handleRootFolderContextMenu = (event: MouseEvent, folder: TFolder) => {
@@ -188,6 +207,12 @@ export function MainFolder(props: FolderProps) {
     return (
         <div className="oz-folders-tree-wrapper">
             <div className="oz-folders-action-items file-tree-header-fixed">
+                <Icons.FaHome
+                    className="oz-nav-action-button"
+                    size={folderActionItemSize - 2}
+                    onClick={() => void openVaultControlCenter()}
+                    aria-label="Open Vault Control Center"
+                />
                 <Icons.MdOutlineCreateNewFolder
                     className="oz-nav-action-button"
                     size={folderActionItemSize}

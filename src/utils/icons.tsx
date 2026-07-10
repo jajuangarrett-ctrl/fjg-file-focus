@@ -13,6 +13,7 @@ import {
     FaGlobe,
     FaProjectDiagram,
     FaFolderOpen,
+    FaHome,
     FaTrash,
 } from 'react-icons/fa';
 import { AiFillFilePdf, AiFillFileImage, AiFillFileWord } from 'react-icons/ai';
@@ -108,6 +109,7 @@ export {
     FaHistory,
     FaProjectDiagram,
     FaRegBookmark,
+    FaHome,
     FaThumbtack,
     FaTrash,
     FaTimesCircle,

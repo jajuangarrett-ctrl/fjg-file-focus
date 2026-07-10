@@ -1,5 +1,10 @@
 # Releases
 
+## 0.1.14
+
+- Added a Home button to the folder toolbar that opens `Artifacts/Vault Control Center/vault-control-center.html`.
+- The Home button uses HTML Viewer when available, with a normal Obsidian file-open fallback.
+
 ## 0.1.13
 
 - Strengthened the AI Quick Format prompt for pasted bullet symbols, hanging wrapped lines, and partially formatted notes.
