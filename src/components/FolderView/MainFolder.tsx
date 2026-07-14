@@ -5,7 +5,7 @@ import ConditionalRootFolderWrapper from 'components/FolderView/ConditionalWrapp
 import { useRecoilState } from 'recoil';
 import * as recoilState from 'recoil/pluginState';
 import { NestedFolders } from 'components/FolderView/NestedFolders';
-import { TFile, TFolder, Menu, Notice } from 'obsidian';
+import { TFolder, Menu, Notice } from 'obsidian';
 import { VaultChangeModal } from 'modals';
 import * as Icons from 'utils/icons';
 import { FolderSortType } from 'settings';
@@ -17,8 +17,7 @@ interface FolderProps {
 }
 
 const OMNISEARCH_COMMAND_ID = 'omnisearch:show-modal';
-const HTML_VIEWER_VIEW_TYPE = 'html-viewer';
-const VAULT_CONTROL_CENTER_PATH = 'Artifacts/Vault Control Center/vault-control-center.html';
+const VAULT_CONTROL_CENTER_COMMAND_ID = 'vault-control-center:open-vault-control-center';
 
 export function MainFolder(props: FolderProps) {
     const treeStyles = { color: 'var(--text-muted)', fill: '#c16ff7', width: '100%' };
@@ -62,22 +61,11 @@ export function MainFolder(props: FolderProps) {
     };
 
     const openVaultControlCenter = async () => {
-        const file = app.vault.getAbstractFileByPath(VAULT_CONTROL_CENTER_PATH);
+        const commands = (app as any).commands;
 
-        if (!(file instanceof TFile)) {
-            new Notice(`Vault Control Center not found: ${VAULT_CONTROL_CENTER_PATH}`);
-            return;
+        if (!commands?.executeCommandById?.(VAULT_CONTROL_CENTER_COMMAND_ID)) {
+            new Notice('Enable or install the Vault Control Center plugin to use this home button.');
         }
-
-        const existingHtmlViewerLeaf = app.workspace.getLeavesOfType(HTML_VIEWER_VIEW_TYPE)[0];
-        const leaf = existingHtmlViewerLeaf || app.workspace.getLeaf(false);
-
-        await leaf.setViewState({
-            type: HTML_VIEWER_VIEW_TYPE,
-            state: { file: file.path },
-            active: true,
-        });
-        await app.workspace.revealLeaf(leaf);
     };
 
     const handleRootFolderContextMenu = (event: MouseEvent, folder: TFolder) => {

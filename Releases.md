@@ -1,5 +1,9 @@
 # Releases
 
+## 0.1.16
+
+- Changed the Home button to open the native Vault Control Center plugin instead of the legacy HTML Viewer dashboard file.
+
 ## 0.1.15
 
 - Changed the Home button to reuse the existing/current HTML Viewer tab instead of following HTML Viewer's new-tab setting.
