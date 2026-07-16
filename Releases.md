@@ -1,5 +1,11 @@
 # Releases
 
+## 0.1.17
+
+- Cached colorful-folder assignments so file and folder rendering no longer repeatedly sorts every root folder.
+- Updated folder counts incrementally for file creates, deletes, and moves instead of rescanning the entire vault.
+- Kept a full recount for rare folder-structure changes where descendant paths can all change.
+
 ## 0.1.16
 
 - Changed the Home button to open the native Vault Control Center plugin instead of the legacy HTML Viewer dashboard file.

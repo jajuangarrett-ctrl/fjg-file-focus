@@ -97,6 +97,12 @@ const normalizeVaultPath = (path: string): string => {
     return path.replace(/^\/+|\/+$/g, '');
 };
 
+const rootFolderColorCache = new WeakMap<FileTreeAlternativePlugin, Map<string, number>>();
+
+export const invalidateRootFolderColorCache = (plugin: FileTreeAlternativePlugin): void => {
+    rootFolderColorCache.delete(plugin);
+};
+
 export const getColorfulFolderClassName = (folderPath: string, plugin: FileTreeAlternativePlugin): string => {
     if (!plugin.settings.colorfulFolders) return '';
 
@@ -139,14 +145,20 @@ const getColorfulColorClassName = (folderPath: string, plugin: FileTreeAlternati
 };
 
 const getRootFolderColorIndex = (rootFolderName: string, plugin: FileTreeAlternativePlugin): number => {
-    const rootFolders = plugin.app.vault
-        .getRoot()
-        .children.filter((child): child is TFolder => child instanceof TFolder)
-        .sort((a, b) => a.name.localeCompare(b.name, 'en', { numeric: true }));
-    const folderIndex = rootFolders.findIndex((folder) => folder.name === rootFolderName);
-    const sourceIndex = folderIndex >= 0 ? folderIndex : hashFolderName(rootFolderName);
+    let colorMap = rootFolderColorCache.get(plugin);
 
-    return sourceIndex % 12;
+    if (!colorMap) {
+        colorMap = new Map(
+            plugin.app.vault
+                .getRoot()
+                .children.filter((child): child is TFolder => child instanceof TFolder)
+                .sort((a, b) => a.name.localeCompare(b.name, 'en', { numeric: true }))
+                .map((folder, index) => [folder.name, index % 12])
+        );
+        rootFolderColorCache.set(plugin, colorMap);
+    }
+
+    return colorMap.get(rootFolderName) ?? hashFolderName(rootFolderName) % 12;
 };
 
 const hashFolderName = (folderName: string): number => {
@@ -237,6 +249,81 @@ export const getFolderNoteCountMap = (plugin: FileTreeAlternativePlugin) => {
         }
     });
     return counts;
+};
+
+const getPathParts = (path: string) => {
+    const parts = normalizeVaultPath(path).split('/').filter(Boolean);
+    const fileName = parts.pop() || '';
+    const extensionSeparator = fileName.lastIndexOf('.');
+    const extension = extensionSeparator >= 0 ? fileName.slice(extensionSeparator + 1).toLowerCase() : '';
+    const basename = extensionSeparator >= 0 ? fileName.slice(0, extensionSeparator) : fileName;
+
+    return {
+        basename,
+        extension,
+        parentName: parts[parts.length - 1] || '',
+        parentPath: parts.join('/'),
+    };
+};
+
+const shouldCountFileAtPath = (plugin: FileTreeAlternativePlugin, path: string): boolean => {
+    const { basename, extension, parentName } = getPathParts(path);
+    const excludedExtensions = settingListToArray(plugin.settings.excludedExtensions).map((item) => item.toLowerCase());
+    const excludedFolders = settingListToArray(plugin.settings.excludedFolders);
+
+    if (plugin.settings.folderCountOption === 'notes' && extension !== 'md') return false;
+    if (plugin.settings.showOnlySupportedFileTypes && !SUPPORTED_FILE_EXTENSIONS.has(extension)) return false;
+    if (excludedExtensions.includes(extension)) return false;
+    if (plugin.settings.hideAttachments && path.toLowerCase().includes(plugin.settings.attachmentsFolderName.toLowerCase())) return false;
+    if (isPathInExcludedFolder(path, excludedFolders)) return false;
+    if (plugin.settings.folderNote && extension === 'md' && basename === parentName) return false;
+
+    return true;
+};
+
+const adjustFolderCountsForPath = (counts: FolderFileCountMap, path: string, delta: 1 | -1): void => {
+    const { parentPath } = getPathParts(path);
+    const ancestors: string[] = [];
+    let currentPath = parentPath;
+
+    while (true) {
+        ancestors.push(currentPath === '' ? '/' : currentPath);
+        if (currentPath === '') break;
+        const separator = currentPath.lastIndexOf('/');
+        currentPath = separator >= 0 ? currentPath.slice(0, separator) : '';
+    }
+
+    ancestors.forEach((folderPath, index) => {
+        const current = counts[folderPath] || { open: 0, closed: 0 };
+        const nextOpen = Math.max(0, current.open + (index === 0 ? delta : 0));
+        const nextClosed = Math.max(0, current.closed + delta);
+
+        if (nextOpen === 0 && nextClosed === 0) delete counts[folderPath];
+        else counts[folderPath] = { open: nextOpen, closed: nextClosed };
+    });
+};
+
+export const updateFolderNoteCountMap = (params: {
+    counts: FolderFileCountMap;
+    plugin: FileTreeAlternativePlugin;
+    file: TFile;
+    changeType: 'create' | 'delete' | 'rename';
+    oldPath?: string;
+}): FolderFileCountMap => {
+    const { counts, plugin, file, changeType, oldPath } = params;
+    const nextCounts: FolderFileCountMap = { ...counts };
+
+    if ((changeType === 'delete' || changeType === 'rename') && oldPath && shouldCountFileAtPath(plugin, oldPath)) {
+        adjustFolderCountsForPath(nextCounts, oldPath, -1);
+    } else if (changeType === 'delete' && shouldCountFileAtPath(plugin, file.path)) {
+        adjustFolderCountsForPath(nextCounts, file.path, -1);
+    }
+
+    if ((changeType === 'create' || changeType === 'rename') && shouldCountFileAtPath(plugin, file.path)) {
+        adjustFolderCountsForPath(nextCounts, file.path, 1);
+    }
+
+    return nextCounts;
 };
 
 // Check if folder has child folder

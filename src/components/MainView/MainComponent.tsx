@@ -338,6 +338,7 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
 
         // Folder Event Handlers
         else if (file instanceof TFolder) {
+            FileTreeUtils.invalidateRootFolderColorCache(plugin);
             let currentFocusedFolder: TFolder = null;
             setFocusedFolder((focusedFolder) => {
                 currentFocusedFolder = focusedFolder;
@@ -352,7 +353,20 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
 
         // After Each Vault Change Folder Count Map to Be Updated
         if (plugin.settings.folderCount && changeType !== 'modify') {
-            setFolderFileCountMap(FileTreeUtils.getFolderNoteCountMap(plugin));
+            if (file instanceof TFile) {
+                setFolderFileCountMap((counts) =>
+                    FileTreeUtils.updateFolderNoteCountMap({
+                        counts,
+                        plugin,
+                        file,
+                        changeType,
+                        oldPath: oldPathBeforeRename,
+                    })
+                );
+            } else {
+                // Folder changes are uncommon and can alter every descendant path.
+                setFolderFileCountMap(FileTreeUtils.getFolderNoteCountMap(plugin));
+            }
         }
     }
 
