@@ -1,5 +1,9 @@
 # Releases
 
+## 0.1.18
+
+- Added a top toolbar tags button that opens AI Task Tagger's folder review flow for the selected FJG File Focus folder.
+
 ## 0.1.17
 
 - Cached colorful-folder assignments so file and folder rendering no longer repeatedly sorts every root folder.

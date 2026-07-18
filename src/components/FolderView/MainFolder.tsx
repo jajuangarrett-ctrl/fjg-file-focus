@@ -18,6 +18,7 @@ interface FolderProps {
 
 const OMNISEARCH_COMMAND_ID = 'omnisearch:show-modal';
 const VAULT_CONTROL_CENTER_COMMAND_ID = 'vault-control-center:open-vault-control-center';
+const AI_TASK_TAGGER_PLUGIN_ID = 'ai-task-tagger';
 
 export function MainFolder(props: FolderProps) {
     const treeStyles = { color: 'var(--text-muted)', fill: '#c16ff7', width: '100%' };
@@ -60,12 +61,30 @@ export function MainFolder(props: FolderProps) {
         createFolder(focusedFolder instanceof TFolder ? focusedFolder : rootFolder);
     };
 
+    const getSelectedFolder = () => {
+        const activeFolder = activeFolderPath ? app.vault.getAbstractFileByPath(activeFolderPath) : null;
+        if (activeFolder instanceof TFolder) return activeFolder;
+        if (focusedFolder instanceof TFolder) return focusedFolder;
+        return rootFolder;
+    };
+
     const openVaultControlCenter = async () => {
         const commands = (app as any).commands;
 
         if (!commands?.executeCommandById?.(VAULT_CONTROL_CENTER_COMMAND_ID)) {
             new Notice('Enable or install the Vault Control Center plugin to use this home button.');
         }
+    };
+
+    const reviewSelectedFolderTags = () => {
+        const aiTaskTagger = (app as any).plugins?.getPlugin?.(AI_TASK_TAGGER_PLUGIN_ID);
+
+        if (!aiTaskTagger?.openFolderBatch) {
+            new Notice('Enable or update AI Task Tagger to review tags for the selected folder.');
+            return;
+        }
+
+        aiTaskTagger.openFolderBatch(getSelectedFolder());
     };
 
     const handleRootFolderContextMenu = (event: MouseEvent, folder: TFolder) => {
@@ -208,6 +227,12 @@ export function MainFolder(props: FolderProps) {
                     size={folderActionItemSize}
                     onClick={() => createFolderInCurrentFolder()}
                     aria-label="Create Folder in Current Folder"
+                />
+                <Icons.FaTags
+                    className="oz-nav-action-button"
+                    size={folderActionItemSize - 2}
+                    onClick={reviewSelectedFolderTags}
+                    aria-label="Review Selected Folder Tags with AI"
                 />
                 <Icons.IoIosSearch
                     className="oz-nav-action-button"

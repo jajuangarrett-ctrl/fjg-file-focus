@@ -14,6 +14,7 @@ import {
     FaProjectDiagram,
     FaFolderOpen,
     FaHome,
+    FaTags,
     FaTrash,
 } from 'react-icons/fa';
 import { AiFillFilePdf, AiFillFileImage, AiFillFileWord } from 'react-icons/ai';
@@ -111,6 +112,7 @@ export {
     FaRegBookmark,
     FaHome,
     FaThumbtack,
+    FaTags,
     FaTrash,
     FaTimesCircle,
     LocationIcon,
