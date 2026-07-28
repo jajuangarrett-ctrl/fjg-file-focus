@@ -6,6 +6,7 @@ FJG File Focus is an Obsidian sidebar plugin for Franklin Garrett's vault workfl
 
 - A renamed standalone Obsidian plugin: `fjg-file-focus`.
 - A left-sidebar file tree view named `FJG File Focus`.
+- A dedicated folder-tree ribbon icon that opens and reveals the File Focus sidebar.
 - Toolbar buttons for Recent Notes and Bookmarks in the folder toolbar.
 - Recent notes and bookmarks render inside the sidebar file-list area instead of opening a popup modal.
 - Recent tracking for Markdown and Canvas files.

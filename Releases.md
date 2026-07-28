@@ -1,5 +1,10 @@
 # Releases
 
+## 0.1.19
+
+- Added a dedicated FJG File Focus folder-tree icon to Obsidian's ribbon.
+- Replaced the unsupported legacy icon name so the ribbon button renders reliably.
+
 ## 0.1.18
 
 - Added a top toolbar tags button that opens AI Task Tagger's folder review flow for the selected FJG File Focus folder.

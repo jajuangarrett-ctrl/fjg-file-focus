@@ -6,6 +6,15 @@ import { FileTreeViewMode, VaultChange, eventTypes } from 'utils/types';
 import { getBookmarkTitle } from 'utils/Utils';
 import { ensureNoteProperties, ensureNotePropertiesWithNotice, isMarkdownFile } from 'utils/noteProperties';
 
+const FileFocusIcon = `
+    <path d="M3 5a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v4H3Z" />
+    <path d="M7 11v3h10" />
+    <path d="M11 14v3" />
+    <path d="M17 14v3" />
+    <rect x="9" y="17" width="4" height="4" rx="1" />
+    <rect x="15" y="17" width="4" height="4" rx="1" />
+`;
+
 export default class FileTreeAlternativePlugin extends Plugin {
     settings: FileTreeAlternativePluginSettings;
     ribbonIconEl: HTMLElement | undefined = undefined;
@@ -22,11 +31,12 @@ export default class FileTreeAlternativePlugin extends Plugin {
     // File Tree View Variables
     VIEW_TYPE = 'fjg-file-focus-view';
     VIEW_DISPLAY_TEXT = 'FJG File Focus';
-    ICON = 'sheets-in-box';
+    ICON = 'fjg-file-focus';
 
     async onload() {
         console.log('Loading FJG File Focus Plugin');
 
+        addIcon(this.ICON, FileFocusIcon);
         addIcon('zoomInIcon', ZoomInIcon);
         addIcon('zoomOutIcon', ZoomOutIcon);
         addIcon('zoomOutDoubleIcon', ZoomOutDoubleIcon);
