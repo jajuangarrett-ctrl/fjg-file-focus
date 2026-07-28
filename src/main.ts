@@ -7,12 +7,14 @@ import { getBookmarkTitle } from 'utils/Utils';
 import { ensureNoteProperties, ensureNotePropertiesWithNotice, isMarkdownFile } from 'utils/noteProperties';
 
 const FileFocusIcon = `
-    <path d="M3 5a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v4H3Z" />
-    <path d="M7 11v3h10" />
-    <path d="M11 14v3" />
-    <path d="M17 14v3" />
-    <rect x="9" y="17" width="4" height="4" rx="1" />
-    <rect x="15" y="17" width="4" height="4" rx="1" />
+    <g fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 29c0-7 5-12 12-12h17l10 10h29c7 0 12 5 12 12v17H12Z" />
+        <path d="M29 56v12h42" />
+        <path d="M46 68v10" />
+        <path d="M71 68v10" />
+        <rect x="35" y="78" width="22" height="15" rx="4" />
+        <rect x="60" y="78" width="22" height="15" rx="4" />
+    </g>
 `;
 
 export default class FileTreeAlternativePlugin extends Plugin {
