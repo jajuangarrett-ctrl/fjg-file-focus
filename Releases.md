@@ -1,5 +1,10 @@
 # Releases
 
+## 0.1.22
+
+- Replaced the File Focus folder-tree toolbar button with a checklist button for FJG Task Manager.
+- The button stays between Home and New Folder and opens the native Task Dashboard.
+
 ## 0.1.21
 
 - Moved the File Focus folder-tree button between Home and New Folder in the top toolbar.

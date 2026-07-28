@@ -21,7 +21,7 @@ import { AiFillFilePdf, AiFillFileImage, AiFillFileWord } from 'react-icons/ai';
 import { IoIosSearch, IoIosEye, IoIosEyeOff, IoIosAddCircle, IoIosCloseCircleOutline, IoIosArrowBack, IoMdArrowDropright } from 'react-icons/io';
 import { MdFormatListBulleted, MdLocationOn, MdOutlineCreateNewFolder, MdTitle } from 'react-icons/md';
 import { CgChevronDoubleDown, CgChevronDoubleUp, CgSortAz } from 'react-icons/cg';
-import { LuFolderTree } from 'react-icons/lu';
+import { LuListChecks } from 'react-icons/lu';
 
 const MinusSquareO = (props: any) => (
     <svg {...props} viewBox="64 -65 897 897">
@@ -136,7 +136,7 @@ export {
     MdFormatListBulleted,
     MdLocationOn,
     MdTitle,
-    LuFolderTree,
+    LuListChecks,
     BiFile,
     AiFillFilePdf,
     AiFillFileImage,

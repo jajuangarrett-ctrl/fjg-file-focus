@@ -18,6 +18,7 @@ interface FolderProps {
 
 const OMNISEARCH_COMMAND_ID = 'omnisearch:show-modal';
 const VAULT_CONTROL_CENTER_COMMAND_ID = 'vault-control-center:open-vault-control-center';
+const FJG_TASK_MANAGER_COMMAND_ID = 'fjg-task-manager:open-dashboard';
 const AI_TASK_TAGGER_PLUGIN_ID = 'ai-task-tagger';
 
 export function MainFolder(props: FolderProps) {
@@ -44,10 +45,6 @@ export function MainFolder(props: FolderProps) {
 
     const openFocusPanel = (panel: 'recent' | 'bookmarks') => {
         setView(panel);
-    };
-
-    const showFileFocusFiles = () => {
-        setView('file');
     };
 
     const createFolder = (underFolder: TFolder) => {
@@ -78,6 +75,17 @@ export function MainFolder(props: FolderProps) {
         if (!commands?.executeCommandById?.(VAULT_CONTROL_CENTER_COMMAND_ID)) {
             new Notice('Enable or install the Vault Control Center plugin to use this home button.');
         }
+    };
+
+    const openTaskManagerDashboard = () => {
+        const commands = (app as any).commands;
+
+        if (!commands?.commands?.[FJG_TASK_MANAGER_COMMAND_ID] || !commands?.executeCommandById) {
+            new Notice('Enable or update FJG Task Manager to open the Task Dashboard.');
+            return;
+        }
+
+        commands.executeCommandById(FJG_TASK_MANAGER_COMMAND_ID);
     };
 
     const reviewSelectedFolderTags = () => {
@@ -226,11 +234,11 @@ export function MainFolder(props: FolderProps) {
                     onClick={() => void openVaultControlCenter()}
                     aria-label="Open Vault Control Center"
                 />
-                <Icons.LuFolderTree
-                    className={`oz-nav-action-button${view === 'file' ? ' is-active' : ''}`}
+                <Icons.LuListChecks
+                    className="oz-nav-action-button"
                     size={folderActionItemSize}
-                    onClick={showFileFocusFiles}
-                    aria-label="Show FJG File Focus Files"
+                    onClick={openTaskManagerDashboard}
+                    aria-label="Open FJG Task Manager Dashboard"
                 />
                 <Icons.MdOutlineCreateNewFolder
                     className="oz-nav-action-button"
