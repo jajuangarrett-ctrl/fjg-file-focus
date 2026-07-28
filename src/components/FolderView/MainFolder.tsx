@@ -226,6 +226,12 @@ export function MainFolder(props: FolderProps) {
                     onClick={() => void openVaultControlCenter()}
                     aria-label="Open Vault Control Center"
                 />
+                <Icons.LuFolderTree
+                    className={`oz-nav-action-button${view === 'file' ? ' is-active' : ''}`}
+                    size={folderActionItemSize}
+                    onClick={showFileFocusFiles}
+                    aria-label="Show FJG File Focus Files"
+                />
                 <Icons.MdOutlineCreateNewFolder
                     className="oz-nav-action-button"
                     size={folderActionItemSize}
@@ -279,12 +285,6 @@ export function MainFolder(props: FolderProps) {
                     size={folderActionItemSize}
                     onClick={explandAllFolders}
                     aria-label="Expand Folders"
-                />
-                <Icons.LuFolderTree
-                    className={`oz-nav-action-button${view === 'file' ? ' is-active' : ''}`}
-                    size={folderActionItemSize}
-                    onClick={showFileFocusFiles}
-                    aria-label="Show FJG File Focus Files"
                 />
             </div>
             <ConditionalRootFolderWrapper

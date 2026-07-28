@@ -1,5 +1,9 @@
 # Releases
 
+## 0.1.21
+
+- Moved the File Focus folder-tree button between Home and New Folder in the top toolbar.
+
 ## 0.1.20
 
 - Added the File Focus folder-tree icon to the top toolbar shown inside the plugin.
