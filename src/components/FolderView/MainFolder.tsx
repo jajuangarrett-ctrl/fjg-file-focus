@@ -46,6 +46,10 @@ export function MainFolder(props: FolderProps) {
         setView(panel);
     };
 
+    const showFileFocusFiles = () => {
+        setView('file');
+    };
+
     const createFolder = (underFolder: TFolder) => {
         let vaultChangeModal = new VaultChangeModal(plugin, underFolder, 'create folder');
         vaultChangeModal.open();
@@ -275,6 +279,12 @@ export function MainFolder(props: FolderProps) {
                     size={folderActionItemSize}
                     onClick={explandAllFolders}
                     aria-label="Expand Folders"
+                />
+                <Icons.LuFolderTree
+                    className={`oz-nav-action-button${view === 'file' ? ' is-active' : ''}`}
+                    size={folderActionItemSize}
+                    onClick={showFileFocusFiles}
+                    aria-label="Show FJG File Focus Files"
                 />
             </div>
             <ConditionalRootFolderWrapper

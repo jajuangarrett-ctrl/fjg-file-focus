@@ -1,5 +1,10 @@
 # Releases
 
+## 0.1.20
+
+- Added the File Focus folder-tree icon to the top toolbar shown inside the plugin.
+- Made the toolbar icon return the lower pane from Recent Notes or Bookmarks to the normal file list.
+
 ## 0.1.19
 
 - Added a dedicated FJG File Focus folder-tree icon to Obsidian's ribbon.
