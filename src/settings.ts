@@ -14,6 +14,7 @@ const DEFAULT_EXCLUDED_FOLDERS = ['AI Team/_codex_task_logs', 'Artifacts/Agent M
 export interface FileTreeAlternativePluginSettings {
     openViewOnStart: boolean;
     ribbonIcon: boolean;
+    followActiveFile: boolean;
     showRootFolder: boolean;
     showFilesFromSubFolders: boolean;
     showOnlySupportedFileTypes: boolean;
@@ -50,6 +51,7 @@ export interface FileTreeAlternativePluginSettings {
 export const DEFAULT_SETTINGS: FileTreeAlternativePluginSettings = {
     openViewOnStart: true,
     ribbonIcon: true,
+    followActiveFile: true,
     showRootFolder: true,
     showFilesFromSubFolders: true,
     showOnlySupportedFileTypes: false,
@@ -175,6 +177,17 @@ export class FileTreeAlternativePluginSettingsTab extends PluginSettingTab {
             );
 
         containerEl.createEl('h2', { text: 'FJG File Focus' });
+
+        new Setting(containerEl)
+            .setName('Follow active note')
+            .setDesc('Automatically show and select the folder and file for the note currently open in Obsidian.')
+            .addToggle((toggle) =>
+                toggle.setValue(this.plugin.settings.followActiveFile).onChange((value) => {
+                    this.plugin.settings.followActiveFile = value;
+                    this.plugin.saveSettings();
+                    if (value) this.plugin.dispatchActiveFileChange(this.plugin.app.workspace.getActiveFile());
+                })
+            );
 
         new Setting(containerEl)
             .setName('Max recent notes')

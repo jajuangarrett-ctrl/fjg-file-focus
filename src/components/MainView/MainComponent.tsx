@@ -71,7 +71,15 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
         window.addEventListener(eventTypes.revealFolder, handleRevealFolderEvent);
         window.addEventListener(eventTypes.createNewNote, handleCreateNewNoteEvent);
         window.addEventListener(eventTypes.openFocusPanel, handleOpenFocusPanelEvent);
+
+        const activeFile = plugin.app.workspace.getActiveFile();
+        const initialRevealFrame =
+            plugin.settings.followActiveFile && activeFile
+                ? window.requestAnimationFrame(() => revealFileInFileTree(FileTreeUtils.TFile2OZFile(activeFile)))
+                : null;
+
         return () => {
+            if (initialRevealFrame !== null) window.cancelAnimationFrame(initialRevealFrame);
             window.removeEventListener(eventTypes.vaultChange, vaultChangeEvent);
             window.removeEventListener(eventTypes.activeFileChange, changeActiveFile);
             window.removeEventListener(eventTypes.refreshView, forceUpdate);
@@ -101,10 +109,10 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
     };
 
     const changeActiveFile = (evt: Event) => {
-        // @ts-ignore
-        let filePath: string = evt.detail.filePath;
+        const filePath = (evt as CustomEvent<{ filePath?: string }>).detail?.filePath;
+        if (!filePath) return;
         let file = plugin.app.vault.getAbstractFileByPath(filePath);
-        if (file) setActiveOzFile(FileTreeUtils.TFile2OZFile(file as TFile));
+        if (file instanceof TFile) revealFileInFileTree(FileTreeUtils.TFile2OZFile(file));
     };
 
     // Initial Load
@@ -374,7 +382,7 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
     // --> During file list change, it will scroll to the active file element
     useEffect(() => {
         if (activeOZFile && ozFileList.length > 0) scrollToFile(activeOZFile);
-    }, [ozFileList]);
+    }, [ozFileList, activeOZFile]);
 
     // Custom Event Handler Function
     async function handleRevealFileEvent(evt: Event) {
@@ -440,21 +448,21 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
         // Get parent folder
         const parentFolder = fileToReveal.parent;
 
-        // Focused Folder needs to be root for the reveal
-        if (focusedFolder && focusedFolder.path !== '/') setFocusedFolder(plugin.app.vault.getRoot());
+        // Keep the complete folder path available so the active note's location is visible.
+        setFocusedFolder((currentFolder) => (currentFolder?.isRoot() ? currentFolder : plugin.app.vault.getRoot()));
 
         // Sanity check - Parent to be folder and set required component states
         if (parentFolder instanceof TFolder) {
             // Set Active Folder - It will trigger auto file list update
             setActiveFolderPath(parentFolder.path);
+            setView('file');
 
             // Set active file to show in the list
             setActiveOzFile(FileTreeUtils.TFile2OZFile(fileToReveal));
 
             // Set openfolders to expand in the folder list
             const foldersToOpen = getAllFoldersToOpen(fileToReveal);
-            let openFoldersSet = new Set([...openFolders, ...foldersToOpen]);
-            setOpenFolders(Array.from(openFoldersSet));
+            setOpenFolders((currentOpenFolders) => Array.from(new Set([...currentOpenFolders, ...foldersToOpen])));
 
             scrollToFile(FileTreeUtils.TFile2OZFile(fileToReveal));
             scrollToFolder(parentFolder);

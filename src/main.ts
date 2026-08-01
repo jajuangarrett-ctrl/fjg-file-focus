@@ -1,4 +1,4 @@
-import { Plugin, addIcon, TAbstractFile, Notice } from 'obsidian';
+import { Plugin, addIcon, TAbstractFile, TFile, Notice } from 'obsidian';
 import { FileTreeView } from './FileTreeView';
 import { ZoomInIcon, ZoomOutIcon, ZoomOutDoubleIcon, LocationIcon, SpaceIcon } from './utils/icons';
 import { FileTreeAlternativePluginSettings, FileTreeAlternativePluginSettingsTab, DEFAULT_SETTINGS } from './settings';
@@ -91,6 +91,8 @@ export default class FileTreeAlternativePlugin extends Plugin {
                 this.bookmarksAddEventListener();
             }
         });
+
+        this.registerEvent(this.app.workspace.on('file-open', this.onFileOpen));
 
         // Add Command to Reveal Active File
         this.addCommand({
@@ -249,6 +251,15 @@ export default class FileTreeAlternativePlugin extends Plugin {
         if (isMarkdownFile(file)) {
             this.ensureManagedNoteProperties(file);
         }
+    };
+
+    onFileOpen = (file: TFile | null) => {
+        if (this.settings.followActiveFile) this.dispatchActiveFileChange(file);
+    };
+
+    dispatchActiveFileChange = (file: TFile | null) => {
+        if (!file) return;
+        window.dispatchEvent(new CustomEvent(eventTypes.activeFileChange, { detail: { filePath: file.path } }));
     };
 
     ensureManagedNoteProperties = async (file: TAbstractFile) => {

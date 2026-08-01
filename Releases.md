@@ -1,5 +1,11 @@
 # Releases
 
+## 0.1.23
+
+- Added automatic active-note following on desktop and mobile.
+- File Focus now opens the active note's parent folder, selects the note, and expands its folder path when notes change or the sidebar first loads.
+- Added a **Follow active note** setting, enabled by default.
+
 ## 0.1.22
 
 - Replaced the File Focus folder-tree toolbar button with a checklist button for FJG Task Manager.
