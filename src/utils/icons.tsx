@@ -23,8 +23,17 @@ import { MdFormatListBulleted, MdLocationOn, MdOutlineCreateNewFolder, MdTitle }
 import { CgChevronDoubleDown, CgChevronDoubleUp, CgSortAz } from 'react-icons/cg';
 import { LuListChecks } from 'react-icons/lu';
 
-const SunriseIcon = (props: any) => (
-    <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+const SunriseIcon = ({ size = 20, ...props }: any) => (
+    <svg
+        {...props}
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round">
         <path d="M12 2v2" />
         <path d="m4.93 4.93 1.42 1.42" />
         <path d="M20 12h2" />

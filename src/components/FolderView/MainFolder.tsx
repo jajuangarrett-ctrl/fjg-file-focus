@@ -236,8 +236,10 @@ export function MainFolder(props: FolderProps) {
                 />
                 <Icons.SunriseIcon
                     className="oz-nav-action-button"
-                    size={folderActionItemSize}
-                    onClick={() => void plugin.openInboxMorningBrief()}
+                    size={folderActionItemSize - 2}
+                    onClick={(): void => {
+                        void plugin.openInboxMorningBrief();
+                    }}
                     aria-label="Open Inbox Morning Brief"
                 />
                 <Icons.LuListChecks
