@@ -1,5 +1,10 @@
 # Releases
 
+## 0.1.24
+
+- Added an Inbox Morning Brief ribbon button immediately after the second visible left-ribbon action.
+- The sunrise button opens `Artifacts/Inbox Morning Brief/Inbox Morning Brief.html` in Obsidian.
+
 ## 0.1.23
 
 - Added automatic active-note following on desktop and mobile.
