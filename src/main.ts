@@ -17,9 +17,13 @@ const FileFocusIcon = `
     </g>
 `;
 
+const INBOX_MORNING_BRIEF_PATH = 'Artifacts/Inbox Morning Brief/Inbox Morning Brief.html';
+
 export default class FileTreeAlternativePlugin extends Plugin {
     settings: FileTreeAlternativePluginSettings;
     ribbonIconEl: HTMLElement | undefined = undefined;
+    inboxMorningBriefRibbonIconEl: HTMLElement | undefined = undefined;
+    ribbonMutationObserver: MutationObserver | undefined = undefined;
 
     keys = {
         activeFolderPathKey: 'fjgFileFocus-ActiveFolderPath',
@@ -78,6 +82,12 @@ export default class FileTreeAlternativePlugin extends Plugin {
             id: 'open-bookmarks-panel',
             name: 'Open Bookmarks in FJG File Focus',
             callback: async () => await this.openFocusPanel('bookmarks'),
+        });
+
+        this.addCommand({
+            id: 'open-inbox-morning-brief',
+            name: 'Open Inbox Morning Brief',
+            callback: async () => await this.openInboxMorningBrief(),
         });
 
         this.addCommand({
@@ -273,12 +283,51 @@ export default class FileTreeAlternativePlugin extends Plugin {
     };
 
     refreshIconRibbon = () => {
+        this.ribbonMutationObserver?.disconnect();
         this.ribbonIconEl?.remove();
+        this.inboxMorningBriefRibbonIconEl?.remove();
         if (this.settings.ribbonIcon) {
             this.ribbonIconEl = this.addRibbonIcon(this.ICON, 'FJG File Focus', async () => {
                 await this.openFileTreeLeaf(true);
             });
+            this.inboxMorningBriefRibbonIconEl = this.addRibbonIcon('sunrise', 'Open Inbox Morning Brief', async () => {
+                await this.openInboxMorningBrief();
+            });
+            this.placeInboxMorningBriefRibbonIcon();
+            const ribbon = this.inboxMorningBriefRibbonIconEl.parentElement;
+            if (ribbon) {
+                this.ribbonMutationObserver = new MutationObserver(() => this.placeInboxMorningBriefRibbonIcon());
+                this.ribbonMutationObserver.observe(ribbon, { childList: true });
+                this.register(() => this.ribbonMutationObserver?.disconnect());
+            }
         }
+    };
+
+    placeInboxMorningBriefRibbonIcon = () => {
+        const ribbonIcon = this.inboxMorningBriefRibbonIconEl;
+        const ribbon = ribbonIcon?.parentElement;
+        if (!ribbonIcon || !ribbon) return;
+
+        const isVisibleRibbonItem = (child: Element): child is HTMLElement => {
+            if (!(child instanceof HTMLElement) || !child.classList.contains('side-dock-ribbon-action')) return false;
+            const style = window.getComputedStyle(child);
+            return style.display !== 'none' && style.visibility !== 'hidden' && child.getAttribute('aria-hidden') !== 'true';
+        };
+        const visibleRibbonItems = Array.from(ribbon.children).filter(isVisibleRibbonItem);
+        const visibleRibbonItemsWithoutBrief = visibleRibbonItems.filter((item) => item !== ribbonIcon);
+        if (visibleRibbonItems[2] !== ribbonIcon) {
+            visibleRibbonItemsWithoutBrief[1]?.insertAdjacentElement('afterend', ribbonIcon);
+        }
+    };
+
+    openInboxMorningBrief = async () => {
+        const file = this.app.vault.getAbstractFileByPath(INBOX_MORNING_BRIEF_PATH);
+        if (!(file instanceof TFile)) {
+            new Notice(`Inbox Morning Brief not found: ${INBOX_MORNING_BRIEF_PATH}`);
+            return;
+        }
+
+        await this.app.workspace.getLeaf(false).openFile(file);
     };
 
     openFileTreeLeaf = async (showAfterAttach: boolean) => {
