@@ -234,6 +234,12 @@ export function MainFolder(props: FolderProps) {
                     onClick={() => void openVaultControlCenter()}
                     aria-label="Open Vault Control Center"
                 />
+                <Icons.SunriseIcon
+                    className="oz-nav-action-button"
+                    size={folderActionItemSize}
+                    onClick={() => void plugin.openInboxMorningBrief()}
+                    aria-label="Open Inbox Morning Brief"
+                />
                 <Icons.LuListChecks
                     className="oz-nav-action-button"
                     size={folderActionItemSize}

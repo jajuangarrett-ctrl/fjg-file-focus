@@ -23,6 +23,19 @@ import { MdFormatListBulleted, MdLocationOn, MdOutlineCreateNewFolder, MdTitle }
 import { CgChevronDoubleDown, CgChevronDoubleUp, CgSortAz } from 'react-icons/cg';
 import { LuListChecks } from 'react-icons/lu';
 
+const SunriseIcon = (props: any) => (
+    <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 2v2" />
+        <path d="m4.93 4.93 1.42 1.42" />
+        <path d="M20 12h2" />
+        <path d="m19.07 4.93-1.42 1.42" />
+        <path d="M2 12h2" />
+        <path d="M4 18h16" />
+        <path d="M6 22h12" />
+        <path d="M8 18a4 4 0 0 1 8 0" />
+    </svg>
+);
+
 const MinusSquareO = (props: any) => (
     <svg {...props} viewBox="64 -65 897 897">
         <g>
@@ -137,6 +150,7 @@ export {
     MdLocationOn,
     MdTitle,
     LuListChecks,
+    SunriseIcon,
     BiFile,
     AiFillFilePdf,
     AiFillFileImage,
