@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Notice, TFile, requestUrl } from 'obsidian';
+import { Notice, Platform, TFile, TFolder, requestUrl } from 'obsidian';
 import Dropzone from 'react-dropzone';
 import * as Icons from 'utils/icons';
 import FileTreeAlternativePlugin from 'main';
@@ -11,6 +11,7 @@ import useForceUpdate from 'hooks/ForceUpdate';
 import useLongPress from 'hooks/useLongPress';
 import * as FileViewHandlers from 'components/FileView/handlers';
 import { ensureNotePropertiesWithNotice, isMarkdownFile } from 'utils/noteProperties';
+import { resolveTaskFilesLocationFromPath } from 'utils/taskFilesLocation';
 import LazyLoad from 'react-lazy-load';
 
 interface FilesProps {
@@ -49,6 +50,19 @@ interface AIGrammarSettings {
 
 interface AIGrammarPluginInstance {
     settings?: AIGrammarSettings;
+}
+
+interface TaskManagerWorkspaceService {
+    resolveFromFile: (file: TFile | null) => { record: { task_id: string } } | null;
+    copyFolderForTask: (taskId: string) => { folderPath: string };
+}
+
+interface TaskManagerPluginInstance {
+    workspaceService?: TaskManagerWorkspaceService;
+}
+
+interface ElectronShell {
+    openPath: (fullPath: string) => Promise<string>;
 }
 
 const stripWrappingCodeFence = (content: string) => {
@@ -255,6 +269,62 @@ export function FileComponent(props: FilesProps) {
         }
     };
 
+    const openSelectedTaskFilesLocation = async () => {
+        if (!Platform.isDesktopApp) {
+            new Notice('Opening task file locations is only available in the desktop app.');
+            return;
+        }
+
+        const activeFile = plugin.app.workspace.getActiveFile();
+        const selectedPath = activeOzFile?.path || activeFile?.path;
+        const selectedFile = selectedPath ? plugin.app.vault.getAbstractFileByPath(selectedPath) : activeFile;
+
+        if (!(selectedFile instanceof TFile)) {
+            new Notice('Select a task file first.');
+            return;
+        }
+
+        try {
+            const taskFilesPath = getTaskFilesPath(plugin, selectedFile);
+            if (!taskFilesPath) {
+                new Notice('The selected file is not part of a managed Inbox or project task workspace.');
+                return;
+            }
+
+            const existing = plugin.app.vault.getAbstractFileByPath(taskFilesPath);
+            if (existing && !(existing instanceof TFolder)) {
+                new Notice(`A file blocks the task Files location: ${taskFilesPath}`);
+                return;
+            }
+            if (!existing) await plugin.app.vault.createFolder(taskFilesPath);
+
+            const adapter = plugin.app.vault.adapter as typeof plugin.app.vault.adapter & {
+                getFullPath?: (path: string) => string;
+            };
+            const fullPath = adapter.getFullPath?.(taskFilesPath);
+            if (!fullPath) {
+                new Notice('Full system paths are not available in this Obsidian environment.');
+                return;
+            }
+
+            const shell = getElectronShell();
+            if (!shell) {
+                new Notice('Finder access is not available in this Obsidian environment.');
+                return;
+            }
+
+            const error = await shell.openPath(fullPath);
+            if (error) {
+                new Notice(`Could not open task Files location: ${error}`);
+                return;
+            }
+
+            new Notice(`Opened task Files location: ${taskFilesPath}`);
+        } catch (error) {
+            new Notice(`Could not open task Files location: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    };
+
     const executeCommandById = async (commandId: string, unavailableNotice: string): Promise<boolean> => {
         const commands = (plugin.app as any).commands;
 
@@ -424,6 +494,15 @@ export function FileComponent(props: FilesProps) {
                                         <div className="oz-nav-action-button">
                                             <Icons.FaFolderOpen onClick={moveCurrentFile} size={topIconSize - 1} aria-label="Move Current File" />
                                         </div>
+                                        {Platform.isDesktopApp && (
+                                            <div className="oz-nav-action-button">
+                                                <Icons.BiFolder
+                                                    onClick={() => void openSelectedTaskFilesLocation()}
+                                                    size={topIconSize}
+                                                    aria-label="Open File Location"
+                                                />
+                                            </div>
+                                        )}
                                         <div className="oz-nav-action-button">
                                             <Icons.MdTitle onClick={() => void generateAutoTitle()} size={topIconSize} aria-label="Generate Auto Title" />
                                         </div>
@@ -540,6 +619,31 @@ export function FileComponent(props: FilesProps) {
             </Dropzone>
         </React.Fragment>
     );
+}
+
+function getTaskFilesPath(plugin: FileTreeAlternativePlugin, file: TFile): string | null {
+    const taskManager = (plugin.app as any).plugins?.getPlugin?.('fjg-task-manager') as TaskManagerPluginInstance | null | undefined;
+    const service = taskManager?.workspaceService;
+
+    if (service?.resolveFromFile && service?.copyFolderForTask) {
+        const task = service.resolveFromFile(file);
+        if (task) {
+            const servicePath = service.copyFolderForTask(task.record.task_id).folderPath;
+            const managedLocation = resolveTaskFilesLocationFromPath(servicePath);
+            if (managedLocation) return managedLocation.folderPath;
+        }
+    }
+
+    return resolveTaskFilesLocationFromPath(file.path)?.folderPath || null;
+}
+
+function getElectronShell(): ElectronShell | null {
+    try {
+        const electronRequire = (window as any).require || (globalThis as any).require;
+        return typeof electronRequire === 'function' ? electronRequire('electron')?.shell || null : null;
+    } catch (_error) {
+        return null;
+    }
 }
 
 /* ----------- SINGLE NAVFILE ELEMENT ----------- */

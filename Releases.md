@@ -1,5 +1,11 @@
 # Releases
 
+## 0.1.26
+
+- Added an **Open File Location** button immediately beside the file pane's existing folder control on desktop.
+- The button follows FJG Task Manager's workspace model instead of the selected item's containing folder: unassigned tasks open their matching `Inbox/Files/<task>` folder, while assigned tasks open `Projects/<project>/Files/<task>`.
+- The same task Files destination is resolved when the selected item comes from the task's Tasks, Updates, or Files area.
+
 ## 0.1.24
 
 - Added an Inbox Morning Brief ribbon button immediately after the second visible left-ribbon action.
