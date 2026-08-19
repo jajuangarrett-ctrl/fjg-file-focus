@@ -319,6 +319,57 @@ div.workspace-leaf-content[data-type='fjg-file-focus-view'] > div.view-content {
     color: var(--text-normal);
 }
 
+.oz-folder-element.is-folder-reveal-highlight {
+    background: rgba(255, 214, 10, 0.88) !important;
+    color: #1f1f1f !important;
+    border-radius: 6px;
+    box-shadow:
+        inset 0 0 0 2px rgba(145, 104, 0, 0.9),
+        0 0 0 2px rgba(255, 214, 10, 0.3);
+    animation: fjg-file-focus-reveal-pulse 700ms ease-out 2;
+}
+
+.theme-dark .oz-folder-element.is-folder-reveal-highlight {
+    background: rgba(255, 214, 10, 0.8) !important;
+    box-shadow:
+        inset 0 0 0 2px rgba(255, 224, 92, 0.95),
+        0 0 0 2px rgba(255, 214, 10, 0.35);
+}
+
+.oz-folder-element.is-folder-reveal-highlight .oz-folder-name {
+    color: #1f1f1f !important;
+}
+
+.fjg-file-focus-reveal-status {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+@keyframes fjg-file-focus-reveal-pulse {
+    0% {
+        filter: brightness(1);
+    }
+    50% {
+        filter: brightness(1.35);
+    }
+    100% {
+        filter: brightness(1);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .oz-folder-element.is-folder-reveal-highlight {
+        animation: none;
+    }
+}
+
 .oz-nav-file {
     margin-left: 3px;
     padding-right: 3px;

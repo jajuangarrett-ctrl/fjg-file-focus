@@ -1,5 +1,12 @@
 # Releases
 
+## 0.1.28
+
+- Added a public folder-reveal action for integrations such as FJG Task Manager.
+- Revealing a folder opens the File Focus sidebar, resets folder focus to the vault root, expands every ancestor, selects the exact folder, and scrolls it into view after React finishes rendering.
+- Revealed folders receive a temporary, screen-reader-announced yellow highlight without replacing normal selection.
+- Preserved the separate Finder-opening workflow in FJG Task Manager.
+
 ## 0.1.27
 
 - Removed the misplaced task Files-location icon from the compact File Focus toolbar.

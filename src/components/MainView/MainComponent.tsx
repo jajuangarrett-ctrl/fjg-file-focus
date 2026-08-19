@@ -1,5 +1,5 @@
 import { TAbstractFile, TFile, TFolder, Notice } from 'obsidian';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { FileComponent } from 'components/FileView/FileComponent';
 import { MainFolder } from 'components/FolderView/MainFolder';
 import { SingleViewVertical, SingleViewHorizontal } from 'components/MainView/SingleView';
@@ -20,6 +20,8 @@ interface MainTreeComponentProps {
 export default function MainTreeComponent(props: MainTreeComponentProps) {
     // --> Main Variables
     const { plugin } = props;
+    const revealHighlightTimeout = useRef<number | null>(null);
+    const revealScrollTimeout = useRef<number | null>(null);
 
     // --> Force Update Hook
     const forceUpdate = useForceUpdate();
@@ -64,6 +66,7 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
 
     // --> Create Custom Event Handlers
     useEffect(() => {
+        const unregisterFolderRevealListener = plugin.registerFolderRevealListener(revealFolderInFileTree);
         window.addEventListener(eventTypes.vaultChange, vaultChangeEvent);
         window.addEventListener(eventTypes.activeFileChange, changeActiveFile);
         window.addEventListener(eventTypes.refreshView, forceUpdate);
@@ -79,6 +82,9 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
                 : null;
 
         return () => {
+            unregisterFolderRevealListener();
+            if (revealHighlightTimeout.current !== null) window.clearTimeout(revealHighlightTimeout.current);
+            if (revealScrollTimeout.current !== null) window.clearTimeout(revealScrollTimeout.current);
             if (initialRevealFrame !== null) window.cancelAnimationFrame(initialRevealFrame);
             window.removeEventListener(eventTypes.vaultChange, vaultChangeEvent);
             window.removeEventListener(eventTypes.activeFileChange, changeActiveFile);
@@ -414,9 +420,76 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
     }
 
     function scrollToFolder(folder: TFolder) {
-        const selector = `div.oz-folder-contents div.oz-folder-element[data-path="${folder.path}"]`;
-        const folderElement = document.querySelector(selector);
-        if (folderElement) folderElement.scrollIntoView(false);
+        const findFolderElement = () =>
+            Array.from(
+                props.fileTreeView.containerEl.querySelectorAll('div.oz-folder-element[data-path]')
+            ).find(
+                (element) => element.getAttribute('data-path') === folder.path && element.getClientRects().length > 0
+            ) as HTMLElement | undefined;
+
+        const centerFolderElement = (folderElement: HTMLElement) => {
+            folderElement.scrollIntoView({ block: 'center', inline: 'nearest' });
+            [folderElement.closest('.oz-folders-tree-wrapper'), folderElement.closest('.oz-folder-pane, .oz-folder-pane-horizontal')]
+                .filter((element): element is HTMLElement => element instanceof HTMLElement)
+                .forEach((scrollContainer) => {
+                    const containerRect = scrollContainer.getBoundingClientRect();
+                    const folderRect = folderElement.getBoundingClientRect();
+                    scrollContainer.scrollTop +=
+                        folderRect.top - containerRect.top - containerRect.height / 2 + folderRect.height / 2;
+                });
+        };
+
+        const scrollAfterRender = (attemptsRemaining: number) => {
+            const folderElement = findFolderElement();
+            if (folderElement) {
+                centerFolderElement(folderElement);
+                if (revealScrollTimeout.current !== null) window.clearTimeout(revealScrollTimeout.current);
+                revealScrollTimeout.current = window.setTimeout(() => {
+                    const settledFolderElement = findFolderElement();
+                    if (settledFolderElement) {
+                        centerFolderElement(settledFolderElement);
+                        highlightRevealedFolder(folder, settledFolderElement);
+                    }
+                    revealScrollTimeout.current = null;
+                }, 150);
+                return;
+            }
+            if (attemptsRemaining > 0) {
+                window.requestAnimationFrame(() => scrollAfterRender(attemptsRemaining - 1));
+            }
+        };
+
+        window.requestAnimationFrame(() => scrollAfterRender(90));
+    }
+
+    function highlightRevealedFolder(folder: TFolder, folderElement: HTMLElement) {
+        const fileFocusLeaf = folderElement.closest('.workspace-leaf-content[data-type="fjg-file-focus-view"]');
+        fileFocusLeaf?.querySelectorAll('.is-folder-reveal-highlight').forEach((element) => {
+            element.classList.remove('is-folder-reveal-highlight');
+        });
+
+        folderElement.classList.add('is-folder-reveal-highlight');
+        if (revealHighlightTimeout.current !== null) window.clearTimeout(revealHighlightTimeout.current);
+        revealHighlightTimeout.current = window.setTimeout(() => {
+            folderElement.classList.remove('is-folder-reveal-highlight');
+            revealHighlightTimeout.current = null;
+        }, 4000);
+
+        if (fileFocusLeaf) {
+            let liveRegion = fileFocusLeaf.querySelector('.fjg-file-focus-reveal-status') as HTMLElement | null;
+            if (!liveRegion) {
+                liveRegion = document.createElement('div');
+                liveRegion.className = 'fjg-file-focus-reveal-status';
+                liveRegion.setAttribute('role', 'status');
+                liveRegion.setAttribute('aria-live', 'polite');
+                liveRegion.setAttribute('aria-atomic', 'true');
+                fileFocusLeaf.appendChild(liveRegion);
+            }
+            liveRegion.textContent = '';
+            window.requestAnimationFrame(() => {
+                if (liveRegion) liveRegion.textContent = `Revealed folder ${folder.name} in FJG File Focus`;
+            });
+        }
     }
 
     // Helper for Reveal Button: Obtain all folders that needs to be opened
@@ -433,10 +506,11 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
     // --> Handle Reveal Folder Button
     function revealFolderInFileTree(folderToReveal: TFolder) {
         if (!folderToReveal) return;
+        setFocusedFolder(plugin.app.vault.getRoot());
         setActiveFolderPath(folderToReveal.path);
+        setView('file');
         const foldersToOpen = getAllFoldersToOpen(folderToReveal);
-        let openFoldersSet = new Set([...openFolders, ...foldersToOpen]);
-        setOpenFolders(Array.from(openFoldersSet));
+        setOpenFolders((currentOpenFolders) => Array.from(new Set([...currentOpenFolders, ...foldersToOpen])));
         scrollToFolder(folderToReveal);
     }
 

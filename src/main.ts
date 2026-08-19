@@ -1,4 +1,4 @@
-import { Plugin, addIcon, TAbstractFile, TFile, Notice } from 'obsidian';
+import { Plugin, addIcon, TAbstractFile, TFile, TFolder, Notice } from 'obsidian';
 import { FileTreeView } from './FileTreeView';
 import { ZoomInIcon, ZoomOutIcon, ZoomOutDoubleIcon, LocationIcon, SpaceIcon } from './utils/icons';
 import { FileTreeAlternativePluginSettings, FileTreeAlternativePluginSettingsTab, DEFAULT_SETTINGS } from './settings';
@@ -24,6 +24,7 @@ export default class FileTreeAlternativePlugin extends Plugin {
     ribbonIconEl: HTMLElement | undefined = undefined;
     inboxMorningBriefRibbonIconEl: HTMLElement | undefined = undefined;
     ribbonMutationObserver: MutationObserver | undefined = undefined;
+    folderRevealListeners = new Set<(folder: TFolder) => void>();
 
     keys = {
         activeFolderPathKey: 'fjgFileFocus-ActiveFolderPath',
@@ -173,6 +174,27 @@ export default class FileTreeAlternativePlugin extends Plugin {
     openFocusPanel = async (view: FileTreeViewMode) => {
         await this.openFileTreeLeaf(true);
         window.dispatchEvent(new CustomEvent(eventTypes.openFocusPanel, { detail: { view } }));
+    };
+
+    revealFolderPath = async (folderPath: string) => {
+        const folder = this.app.vault.getAbstractFileByPath(folderPath);
+        if (!(folder instanceof TFolder)) {
+            throw new Error(`Folder not found: ${folderPath}`);
+        }
+
+        await this.openFileTreeLeaf(true);
+        for (let attempt = 0; attempt < 12 && this.folderRevealListeners.size === 0; attempt += 1) {
+            await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
+        }
+        if (this.folderRevealListeners.size === 0) {
+            throw new Error('FJG File Focus view is not ready.');
+        }
+        this.folderRevealListeners.forEach((listener) => listener(folder));
+    };
+
+    registerFolderRevealListener = (listener: (folder: TFolder) => void) => {
+        this.folderRevealListeners.add(listener);
+        return () => this.folderRevealListeners.delete(listener);
     };
 
     bookmarksEventHandler = (event: Event) => {
