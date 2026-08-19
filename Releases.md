@@ -1,5 +1,10 @@
 # Releases
 
+## 0.1.27
+
+- Removed the misplaced task Files-location icon from the compact File Focus toolbar.
+- The clearly labeled Finder action now lives beside **Open folder** in the authoritative FJG Task Manager task card where the related-file workflow is rendered.
+
 ## 0.1.26
 
 - Added an **Open File Location** button immediately beside the file pane's existing folder control on desktop.
