@@ -17,7 +17,15 @@ const FileFocusIcon = `
     </g>
 `;
 
+const FileFocusTrashIcon = `
+    <g fill="currentColor" stroke="none" transform="translate(6.25 0) scale(0.1953125)">
+        <path d="M432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16zM53.2 467a48 48 0 0 0 47.9 45h245.8a48 48 0 0 0 47.9-45L416 128H32z" />
+    </g>
+`;
+
 const INBOX_MORNING_BRIEF_PATH = 'Artifacts/Inbox Morning Brief/Inbox Morning Brief.html';
+const DELETE_CURRENT_FILE_COMMAND_ID = 'app:delete-file';
+const FILE_FOCUS_TRASH_ICON = 'fjg-file-focus-trash';
 
 export default class FileTreeAlternativePlugin extends Plugin {
     settings: FileTreeAlternativePluginSettings;
@@ -44,6 +52,7 @@ export default class FileTreeAlternativePlugin extends Plugin {
         console.log('Loading FJG File Focus Plugin');
 
         addIcon(this.ICON, FileFocusIcon);
+        addIcon(FILE_FOCUS_TRASH_ICON, FileFocusTrashIcon);
         addIcon('zoomInIcon', ZoomInIcon);
         addIcon('zoomOutIcon', ZoomOutIcon);
         addIcon('zoomOutDoubleIcon', ZoomOutDoubleIcon);
@@ -95,6 +104,28 @@ export default class FileTreeAlternativePlugin extends Plugin {
             id: 'refresh-note-properties',
             name: 'Refresh note properties',
             callback: async () => await ensureNotePropertiesWithNotice(this, this.app.workspace.getActiveFile()),
+        });
+
+        this.addCommand({
+            id: 'delete-current-file',
+            name: 'Delete current file',
+            icon: FILE_FOCUS_TRASH_ICON,
+            callback: () => void this.deleteCurrentFile(),
+        });
+
+        this.addCommand({
+            id: 'copy-current-note-to-clipboard',
+            name: 'Copy entire note to clipboard',
+            icon: 'copy',
+            editorCallback: async (editor) => {
+                try {
+                    await navigator.clipboard.writeText(editor.getValue());
+                    new Notice('Copied entire note to clipboard.');
+                } catch (error) {
+                    console.error('FJG File Focus could not copy the current note:', error);
+                    new Notice('Could not copy the current note to the clipboard.');
+                }
+            },
         });
 
         this.app.workspace.onLayoutReady(() => {
@@ -174,6 +205,16 @@ export default class FileTreeAlternativePlugin extends Plugin {
     openFocusPanel = async (view: FileTreeViewMode) => {
         await this.openFileTreeLeaf(true);
         window.dispatchEvent(new CustomEvent(eventTypes.openFocusPanel, { detail: { view } }));
+    };
+
+    deleteCurrentFile = async () => {
+        const commands = (this.app as any).commands;
+        if (!commands?.commands?.[DELETE_CURRENT_FILE_COMMAND_ID] || !commands?.executeCommandById) {
+            new Notice('Delete current file is not available.');
+            return;
+        }
+
+        await Promise.resolve(commands.executeCommandById(DELETE_CURRENT_FILE_COMMAND_ID));
     };
 
     revealFolderPath = async (folderPath: string) => {

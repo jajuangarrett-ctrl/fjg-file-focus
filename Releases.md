@@ -1,5 +1,11 @@
 # Releases
 
+## 0.1.29
+
+- Added mobile-toolbar commands for deleting the current file and copying the entire current note to the clipboard.
+- The delete command uses the same solid trash icon as the File Focus file-pane toolbar and delegates to Obsidian's native delete action.
+- The copy command reads the live editor buffer so unsaved text is included, then confirms when the note is on the clipboard.
+
 ## 0.1.28
 
 - Added a public folder-reveal action for integrations such as FJG Task Manager.
