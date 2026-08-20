@@ -10,7 +10,7 @@ FJG File Focus is an Obsidian sidebar plugin for Franklin Garrett's vault workfl
 - A checklist button between Home and New Folder that opens the native FJG Task Manager dashboard.
 - Automatic active-note following that opens the note's parent folder, selects the note, and expands its folder path.
 - Toolbar buttons for Recent Notes and Bookmarks in the folder toolbar.
-- Mobile-toolbar commands for deleting the current file and copying the entire current note to the clipboard.
+- Mobile-toolbar commands for deleting the current file and copying the page text—without YAML properties—to the clipboard.
 - Recent notes and bookmarks render inside the sidebar file-list area instead of opening a popup modal.
 - Recent tracking for Markdown and Canvas files.
 - Core Obsidian Bookmarks support, including bookmark groups, files, folders, searches, graph bookmarks, and URLs.

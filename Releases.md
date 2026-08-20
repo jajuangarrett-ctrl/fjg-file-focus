@@ -1,5 +1,11 @@
 # Releases
 
+## 0.1.30
+
+- Changed **Copy page text to clipboard** to omit the note's YAML properties/frontmatter block.
+- The command still copies the live editor body so unsaved page text is included.
+- Notes without a properties block continue to copy in full.
+
 ## 0.1.29
 
 - Added mobile-toolbar commands for deleting the current file and copying the entire current note to the clipboard.

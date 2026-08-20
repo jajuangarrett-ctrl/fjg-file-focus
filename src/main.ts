@@ -5,6 +5,7 @@ import { FileTreeAlternativePluginSettings, FileTreeAlternativePluginSettingsTab
 import { FileTreeViewMode, VaultChange, eventTypes } from 'utils/types';
 import { getBookmarkTitle } from 'utils/Utils';
 import { ensureNoteProperties, ensureNotePropertiesWithNotice, isMarkdownFile } from 'utils/noteProperties';
+import { getPageText } from 'utils/noteContent';
 
 const FileFocusIcon = `
     <g fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
@@ -115,15 +116,15 @@ export default class FileTreeAlternativePlugin extends Plugin {
 
         this.addCommand({
             id: 'copy-current-note-to-clipboard',
-            name: 'Copy entire note to clipboard',
+            name: 'Copy page text to clipboard',
             icon: 'copy',
             editorCallback: async (editor) => {
                 try {
-                    await navigator.clipboard.writeText(editor.getValue());
-                    new Notice('Copied entire note to clipboard.');
+                    await navigator.clipboard.writeText(getPageText(editor.getValue()));
+                    new Notice('Copied page text to clipboard.');
                 } catch (error) {
                     console.error('FJG File Focus could not copy the current note:', error);
-                    new Notice('Could not copy the current note to the clipboard.');
+                    new Notice('Could not copy the page text to the clipboard.');
                 }
             },
         });
