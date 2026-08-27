@@ -149,7 +149,7 @@ export class FileTreeAlternativePluginSettingsTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName('Open on Start')
-            .setDesc('Open File Focus automatically during vault start on desktop. Mobile startup remains manual for stability.')
+            .setDesc('Open File Focus during desktop startup. On mobile, make it available in the sidebar without opening it automatically.')
             .addToggle((toggle) =>
                 toggle.setValue(this.plugin.settings.openViewOnStart).onChange((value) => {
                     this.plugin.settings.openViewOnStart = value;

@@ -71,8 +71,8 @@ export default class FileTreeAlternativePlugin extends Plugin {
 
         // Event Listeners
         this.app.workspace.onLayoutReady(async () => {
-            if (this.shouldOpenViewOnStart()) {
-                await this.openFileTreeLeaf(true);
+            if (this.settings.openViewOnStart) {
+                await this.openFileTreeLeaf(!Platform.isMobile);
             }
         });
 
@@ -330,8 +330,6 @@ export default class FileTreeAlternativePlugin extends Plugin {
     onFileOpen = (file: TFile | null) => {
         if (this.shouldFollowActiveFile()) this.dispatchActiveFileChange(file);
     };
-
-    shouldOpenViewOnStart = () => this.settings.openViewOnStart && !Platform.isMobile;
 
     shouldFollowActiveFile = () => this.settings.followActiveFile && !Platform.isMobile;
 

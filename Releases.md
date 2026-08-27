@@ -1,5 +1,11 @@
 # Releases
 
+## 0.1.32
+
+- Restored the File Focus folder-navigation view to the mobile sidebar after the v0.1.31 startup safeguard made it unavailable there.
+- Mobile now attaches the view quietly without revealing it or following the active file automatically.
+- Preserved normal folder-click navigation on mobile and unchanged automatic startup/following on desktop.
+
 ## 0.1.31
 
 - Kept automatic startup and active-note following unchanged on desktop.
