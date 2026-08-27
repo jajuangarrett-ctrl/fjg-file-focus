@@ -77,7 +77,7 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
 
         const activeFile = plugin.app.workspace.getActiveFile();
         const initialRevealFrame =
-            plugin.settings.followActiveFile && activeFile
+            plugin.shouldFollowActiveFile() && activeFile
                 ? window.requestAnimationFrame(() => revealFileInFileTree(FileTreeUtils.TFile2OZFile(activeFile)))
                 : null;
 

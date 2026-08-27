@@ -1,5 +1,11 @@
 # Releases
 
+## 0.1.31
+
+- Kept automatic startup and active-note following unchanged on desktop.
+- Disabled automatic File Focus sidebar mounting and file-open following on mobile to avoid startup render and memory pressure in large vaults.
+- Preserved manual ribbon, command, and explicit file/folder reveal actions on mobile.
+
 ## 0.1.30
 
 - Changed **Copy page text to clipboard** to omit the note's YAML properties/frontmatter block.

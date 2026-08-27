@@ -149,7 +149,7 @@ export class FileTreeAlternativePluginSettingsTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName('Open on Start')
-            .setDesc("Turn off if you don't want file tree view to be opened automatically during vault start")
+            .setDesc('Open File Focus automatically during vault start on desktop. Mobile startup remains manual for stability.')
             .addToggle((toggle) =>
                 toggle.setValue(this.plugin.settings.openViewOnStart).onChange((value) => {
                     this.plugin.settings.openViewOnStart = value;
@@ -180,12 +180,14 @@ export class FileTreeAlternativePluginSettingsTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName('Follow active note')
-            .setDesc('Automatically show and select the folder and file for the note currently open in Obsidian.')
+            .setDesc('Automatically show and select the open note on desktop. Mobile following remains disabled for stability.')
             .addToggle((toggle) =>
                 toggle.setValue(this.plugin.settings.followActiveFile).onChange((value) => {
                     this.plugin.settings.followActiveFile = value;
                     this.plugin.saveSettings();
-                    if (value) this.plugin.dispatchActiveFileChange(this.plugin.app.workspace.getActiveFile());
+                    if (value && this.plugin.shouldFollowActiveFile()) {
+                        this.plugin.dispatchActiveFileChange(this.plugin.app.workspace.getActiveFile());
+                    }
                 })
             );
 

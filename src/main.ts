@@ -1,4 +1,4 @@
-import { Plugin, addIcon, TAbstractFile, TFile, TFolder, Notice } from 'obsidian';
+import { Plugin, addIcon, TAbstractFile, TFile, TFolder, Notice, Platform } from 'obsidian';
 import { FileTreeView } from './FileTreeView';
 import { ZoomInIcon, ZoomOutIcon, ZoomOutDoubleIcon, LocationIcon, SpaceIcon } from './utils/icons';
 import { FileTreeAlternativePluginSettings, FileTreeAlternativePluginSettingsTab, DEFAULT_SETTINGS } from './settings';
@@ -71,7 +71,7 @@ export default class FileTreeAlternativePlugin extends Plugin {
 
         // Event Listeners
         this.app.workspace.onLayoutReady(async () => {
-            if (this.settings.openViewOnStart) {
+            if (this.shouldOpenViewOnStart()) {
                 await this.openFileTreeLeaf(true);
             }
         });
@@ -328,8 +328,12 @@ export default class FileTreeAlternativePlugin extends Plugin {
     };
 
     onFileOpen = (file: TFile | null) => {
-        if (this.settings.followActiveFile) this.dispatchActiveFileChange(file);
+        if (this.shouldFollowActiveFile()) this.dispatchActiveFileChange(file);
     };
+
+    shouldOpenViewOnStart = () => this.settings.openViewOnStart && !Platform.isMobile;
+
+    shouldFollowActiveFile = () => this.settings.followActiveFile && !Platform.isMobile;
 
     dispatchActiveFileChange = (file: TFile | null) => {
         if (!file) return;
