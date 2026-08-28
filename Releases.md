@@ -1,5 +1,15 @@
 # Releases
 
+## 0.1.33
+
+- Added a default-off **Mobile performance mode** setting. When off, the v0.1.32 mobile startup and navigation path remains in place.
+- When enabled on mobile, saved-layout restoration and startup no longer mount the File Focus React tree. The view mounts only after a ribbon, command, or integration explicitly opens it.
+- Deferred deeper folder-tree construction until a folder branch is expanded. Recursive file listing still occurs only after the relevant folder/file view is requested, and **Expand Folders** remains an explicit full-tree action.
+- Debounced and coalesced repeated file-modify refreshes while the mobile panel is open; hidden or closed performance-mode views do not process UI refresh events.
+- Strengthened the supported view lifecycle so closing or detaching File Focus unmounts React, removes its window listeners, and clears pending refresh work.
+- Changing the setting is immediate on mobile: the current panel closes and can be reopened from the ribbon or command. No restart is required, and desktop behavior is unchanged.
+- Added automated coverage for toggle ON/OFF policy, desktop isolation, startup versus explicit-open lifecycle, and refresh queue batching/cleanup.
+
 ## 0.1.32
 
 - Restored the File Focus folder-navigation view to the mobile sidebar after the v0.1.31 startup safeguard made it unavailable there.

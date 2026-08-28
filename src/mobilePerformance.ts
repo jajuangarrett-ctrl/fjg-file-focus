@@ -6,6 +6,8 @@ export interface MobilePerformancePolicyInput {
     mountedViewCount: number;
 }
 
+export const DEFAULT_MOBILE_PERFORMANCE_MODE = false;
+
 export interface MobilePerformancePolicy {
     active: boolean;
     attachViewOnLayoutReady: boolean;

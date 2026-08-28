@@ -1,12 +1,12 @@
 {
     "name": "fjg-file-focus",
-    "version": "0.1.32",
+    "version": "0.1.33",
     "description": "FJG-focused Obsidian file tree with sidebar recent notes and bookmarks.",
     "main": "main.js",
     "scripts": {
         "dev": "rollup -c -w --bundleConfigAsCjs",
         "build": "NODE_ENV=production rollup -c --bundleConfigAsCjs",
-        "test": "node --experimental-strip-types --test tests/*.test.ts"
+        "test": "node --no-warnings=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test tests/*.test.ts"
     },
     "keywords": ["obsidian", "plugin", "file-tree", "bookmarks", "recent-notes"],
     "author": "Franklin Garrett",

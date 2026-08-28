@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { DebouncedBatchQueue, getMobilePerformancePolicy } from '../src/mobilePerformance.ts';
+import { DEFAULT_MOBILE_PERFORMANCE_MODE, DebouncedBatchQueue, getMobilePerformancePolicy } from '../src/mobilePerformance.ts';
 
 test('mobile performance mode defaults to the existing eager behavior when disabled', () => {
+    assert.equal(DEFAULT_MOBILE_PERFORMANCE_MODE, false);
     const policy = getMobilePerformancePolicy({
         enabled: false,
         isMobile: true,

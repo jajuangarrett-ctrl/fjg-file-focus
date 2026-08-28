@@ -2,6 +2,7 @@ import FileTreeAlternativePlugin from './main';
 import { PluginSettingTab, Setting, App, Notice } from 'obsidian';
 import { LocalStorageHandler } from '@ozntel/local-storage-handler';
 import { eventTypes } from 'utils/types';
+import { DEFAULT_MOBILE_PERFORMANCE_MODE } from './mobilePerformance';
 
 type FolderIcon = 'default' | 'box-folder' | 'icomoon' | 'typicon' | 'circle-gg';
 export type SortType = 'name' | 'last-update' | 'created' | 'file-size';
@@ -51,7 +52,7 @@ export interface FileTreeAlternativePluginSettings {
 
 export const DEFAULT_SETTINGS: FileTreeAlternativePluginSettings = {
     openViewOnStart: true,
-    mobilePerformanceMode: false,
+    mobilePerformanceMode: DEFAULT_MOBILE_PERFORMANCE_MODE,
     ribbonIcon: true,
     followActiveFile: true,
     showRootFolder: true,
