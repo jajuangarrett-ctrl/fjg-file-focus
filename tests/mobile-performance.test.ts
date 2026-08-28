@@ -1,0 +1,120 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { DebouncedBatchQueue, getMobilePerformancePolicy } from '../src/mobilePerformance.ts';
+
+test('mobile performance mode defaults to the existing eager behavior when disabled', () => {
+    const policy = getMobilePerformancePolicy({
+        enabled: false,
+        isMobile: true,
+        openViewOnStart: true,
+        explicitlyOpened: false,
+        mountedViewCount: 0,
+    });
+
+    assert.equal(policy.active, false);
+    assert.equal(policy.attachViewOnLayoutReady, true);
+    assert.equal(policy.mountReactTree, true);
+    assert.equal(policy.buildFolderTreeRecursively, true);
+    assert.equal(policy.dispatchViewRefreshes, true);
+});
+
+test('mobile performance mode defers startup work until an explicit open', () => {
+    const startupPolicy = getMobilePerformancePolicy({
+        enabled: true,
+        isMobile: true,
+        openViewOnStart: true,
+        explicitlyOpened: false,
+        mountedViewCount: 0,
+    });
+    const openedPolicy = getMobilePerformancePolicy({
+        enabled: true,
+        isMobile: true,
+        openViewOnStart: true,
+        explicitlyOpened: true,
+        mountedViewCount: 1,
+    });
+
+    assert.equal(startupPolicy.attachViewOnLayoutReady, false);
+    assert.equal(startupPolicy.mountReactTree, false);
+    assert.equal(startupPolicy.buildFolderTreeRecursively, false);
+    assert.equal(startupPolicy.dispatchViewRefreshes, false);
+    assert.equal(openedPolicy.mountReactTree, true);
+    assert.equal(openedPolicy.dispatchViewRefreshes, true);
+});
+
+test('desktop behavior is unchanged even when the mobile toggle is enabled', () => {
+    const policy = getMobilePerformancePolicy({
+        enabled: true,
+        isMobile: false,
+        openViewOnStart: true,
+        explicitlyOpened: false,
+        mountedViewCount: 0,
+    });
+
+    assert.equal(policy.active, false);
+    assert.equal(policy.attachViewOnLayoutReady, true);
+    assert.equal(policy.mountReactTree, true);
+    assert.equal(policy.buildFolderTreeRecursively, true);
+    assert.equal(policy.dispatchViewRefreshes, true);
+});
+
+test('refresh queue groups a burst and coalesces duplicate keys', () => {
+    let scheduledCallback: (() => void) | null = null;
+    let scheduledDelay = 0;
+    const flushed: Array<Array<{ path: string; revision: number }>> = [];
+    const queue = new DebouncedBatchQueue(
+        250,
+        (item: { path: string }) => item.path,
+        (items) => flushed.push(items),
+        (callback, delay) => {
+            scheduledCallback = callback;
+            scheduledDelay = delay;
+            return 1;
+        },
+        () => undefined
+    );
+
+    queue.enqueue({ path: 'Notes/A.md', revision: 1 });
+    queue.enqueue({ path: 'Notes/A.md', revision: 2 });
+    queue.enqueue({ path: 'Notes/B.md', revision: 1 });
+
+    assert.equal(queue.size, 2);
+    assert.equal(scheduledDelay, 250);
+    assert.ok(scheduledCallback);
+    scheduledCallback?.();
+    assert.deepEqual(flushed, [
+        [
+            { path: 'Notes/A.md', revision: 2 },
+            { path: 'Notes/B.md', revision: 1 },
+        ],
+    ]);
+    assert.equal(queue.size, 0);
+});
+
+test('clearing the refresh queue releases pending work without flushing', () => {
+    let scheduledCallback: (() => void) | null = null;
+    let cancelCount = 0;
+    let flushCount = 0;
+    const queue = new DebouncedBatchQueue(
+        250,
+        (item: { path: string }) => item.path,
+        () => {
+            flushCount += 1;
+        },
+        (callback) => {
+            scheduledCallback = callback;
+            return 7;
+        },
+        () => {
+            cancelCount += 1;
+        }
+    );
+
+    queue.enqueue({ path: 'Notes/A.md' });
+    queue.clear();
+    scheduledCallback?.();
+
+    assert.equal(cancelCount, 1);
+    assert.equal(queue.size, 0);
+    assert.equal(flushCount, 0);
+});
