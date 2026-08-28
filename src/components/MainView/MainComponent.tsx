@@ -10,7 +10,7 @@ import * as FileTreeUtils from 'utils/Utils';
 import * as recoilState from 'recoil/pluginState';
 import { useRecoilState } from 'recoil';
 import useForceUpdate from 'hooks/ForceUpdate';
-import { CustomVaultChangeEvent, FileTreeViewMode, VaultChange, eventTypes, OZFile } from 'utils/types';
+import { CustomVaultChangeBatchEvent, CustomVaultChangeEvent, FileTreeViewMode, VaultChange, eventTypes, OZFile } from 'utils/types';
 
 interface MainTreeComponentProps {
     fileTreeView: FileTreeView;
@@ -68,6 +68,7 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
     useEffect(() => {
         const unregisterFolderRevealListener = plugin.registerFolderRevealListener(revealFolderInFileTree);
         window.addEventListener(eventTypes.vaultChange, vaultChangeEvent);
+        window.addEventListener(eventTypes.vaultChanges, vaultChangesEvent);
         window.addEventListener(eventTypes.activeFileChange, changeActiveFile);
         window.addEventListener(eventTypes.refreshView, forceUpdate);
         window.addEventListener(eventTypes.revealFile, handleRevealFileEvent);
@@ -87,6 +88,7 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
             if (revealScrollTimeout.current !== null) window.clearTimeout(revealScrollTimeout.current);
             if (initialRevealFrame !== null) window.cancelAnimationFrame(initialRevealFrame);
             window.removeEventListener(eventTypes.vaultChange, vaultChangeEvent);
+            window.removeEventListener(eventTypes.vaultChanges, vaultChangesEvent);
             window.removeEventListener(eventTypes.activeFileChange, changeActiveFile);
             window.removeEventListener(eventTypes.refreshView, forceUpdate);
             window.removeEventListener(eventTypes.revealFile, handleRevealFileEvent);
@@ -112,6 +114,10 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
 
     const vaultChangeEvent = (evt: CustomVaultChangeEvent) => {
         handleVaultChanges(evt.detail.file, evt.detail.changeType, evt.detail.oldPath);
+    };
+
+    const vaultChangesEvent = (evt: CustomVaultChangeBatchEvent) => {
+        evt.detail.changes.forEach((change) => handleVaultChanges(change.file, change.changeType, change.oldPath));
     };
 
     const changeActiveFile = (evt: Event) => {
@@ -141,6 +147,7 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
                     startFolder: focusedFolder,
                     plugin: plugin,
                     excludedFolders: excludedFolders,
+                    recursive: plugin.shouldBuildFolderTreeRecursively(),
                 })
             );
             localStorage.setItem(plugin.keys.focusedFolder, focusedFolder.path);
@@ -358,7 +365,14 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
                 currentFocusedFolder = focusedFolder;
                 return focusedFolder;
             });
-            setFolderTree(FileTreeUtils.createFolderTree({ startFolder: currentFocusedFolder, plugin: plugin, excludedFolders: excludedFolders }));
+            setFolderTree(
+                FileTreeUtils.createFolderTree({
+                    startFolder: currentFocusedFolder,
+                    plugin,
+                    excludedFolders,
+                    recursive: plugin.shouldBuildFolderTreeRecursively(),
+                })
+            );
             // if active folder is renamed, activefolderpath needs to be refreshed
             if (changeType === 'rename' && oldPathBeforeRename && currentActiveFolderPath === oldPathBeforeRename) {
                 setActiveFolderPath(file.path);

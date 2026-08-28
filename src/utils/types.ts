@@ -1,4 +1,4 @@
-import { TFolder, TFile } from 'obsidian';
+import { TAbstractFile, TFolder, TFile } from 'obsidian';
 
 export type FileTreeViewMode = 'folder' | 'file' | 'recent' | 'bookmarks';
 export type FocusPanelMode = 'recent' | 'bookmarks';
@@ -85,11 +85,19 @@ export interface ObsidianVaultConfig {
 
 export type VaultChange = 'create' | 'delete' | 'rename' | 'modify';
 
+export interface VaultChangeDetail {
+    file: TAbstractFile;
+    changeType: VaultChange;
+    oldPath: string;
+}
+
 export class CustomVaultChangeEvent extends Event {
+    detail: VaultChangeDetail;
+}
+
+export class CustomVaultChangeBatchEvent extends Event {
     detail: {
-        file: TFile;
-        changeType: VaultChange;
-        oldPath: string;
+        changes: VaultChangeDetail[];
     };
 }
 
@@ -99,6 +107,7 @@ export const eventTypes = {
     revealFile: 'fta-reveal-file',
     revealFolder: 'fta-reveal-folder',
     vaultChange: 'fta-vault-change',
+    vaultChanges: 'fjg-file-focus-vault-changes',
     createNewNote: 'fta-create-new-note',
     openFocusPanel: 'fjg-file-focus-open-panel',
 };

@@ -13,6 +13,7 @@ const DEFAULT_EXCLUDED_FOLDERS = ['AI Team/_codex_task_logs', 'Artifacts/Agent M
 
 export interface FileTreeAlternativePluginSettings {
     openViewOnStart: boolean;
+    mobilePerformanceMode: boolean;
     ribbonIcon: boolean;
     followActiveFile: boolean;
     showRootFolder: boolean;
@@ -50,6 +51,7 @@ export interface FileTreeAlternativePluginSettings {
 
 export const DEFAULT_SETTINGS: FileTreeAlternativePluginSettings = {
     openViewOnStart: true,
+    mobilePerformanceMode: false,
     ribbonIcon: true,
     followActiveFile: true,
     showRootFolder: true,
@@ -177,6 +179,24 @@ export class FileTreeAlternativePluginSettingsTab extends PluginSettingTab {
             );
 
         containerEl.createEl('h2', { text: 'FJG File Focus' });
+
+        new Setting(containerEl)
+            .setName('Mobile performance mode')
+            .setDesc(
+                'Mobile only. Keeps File Focus unmounted during startup, builds deeper folders only as you open them, and groups live refreshes. The change is immediate: the mobile panel closes, then you can reopen it from the ribbon or command. Desktop behavior is unchanged.'
+            )
+            .addToggle((toggle) =>
+                toggle.setValue(this.plugin.settings.mobilePerformanceMode).onChange(async (value) => {
+                    this.plugin.settings.mobilePerformanceMode = value;
+                    await this.plugin.saveSettings();
+                    await this.plugin.applyMobilePerformanceModeChange();
+                    new Notice(
+                        value
+                            ? 'Mobile performance mode is on. Reopen File Focus when you need it.'
+                            : 'Mobile performance mode is off. The standard File Focus behavior is restored.'
+                    );
+                })
+            );
 
         new Setting(containerEl)
             .setName('Follow active note')

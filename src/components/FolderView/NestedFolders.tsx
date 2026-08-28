@@ -221,13 +221,27 @@ export function NestedFolders(props: NestedFoldersProps) {
         <React.Fragment>
             {Array.isArray(props.folderTree.children) &&
                 sortedFolderTree.map((child) => {
+                    const isOpen = openFolders.contains(child.folder.path);
+                    const hasChildFolders = plugin.isMobilePerformanceModeEnabled()
+                        ? Util.hasVisibleChildFolder(child.folder, plugin, excludedFolders)
+                        : child.children.length > 0;
+                    const nestedFolderTree =
+                        plugin.isMobilePerformanceModeEnabled() && isOpen
+                            ? Util.createFolderTree({
+                                  startFolder: child.folder,
+                                  plugin,
+                                  excludedFolders,
+                                  recursive: false,
+                              })
+                            : child;
+
                     return (
                         <React.Fragment key={child.folder.path}>
-                            {child.children.length > 0 ? (
+                            {hasChildFolders ? (
                                 <Tree
                                     plugin={plugin}
                                     content={child.folder.name}
-                                    open={openFolders.contains(child.folder.path)}
+                                    open={isOpen}
                                     onClick={() => handleFolderNameClick(child.folder.path)}
                                     onDoubleClick={() => focusOnFolder(child.folder)}
                                     onContextMenu={(e: MouseEvent | TouchEvent) =>
@@ -237,7 +251,9 @@ export function NestedFolders(props: NestedFoldersProps) {
                                         })
                                     }
                                     folder={child.folder}>
-                                    <NestedFolders plugin={plugin} folderTree={child} />
+                                    {(!plugin.isMobilePerformanceModeEnabled() || isOpen) && (
+                                        <NestedFolders plugin={plugin} folderTree={nestedFolderTree} />
+                                    )}
                                 </Tree>
                             ) : (
                                 <Tree

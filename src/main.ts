@@ -2,10 +2,11 @@ import { Plugin, addIcon, TAbstractFile, TFile, TFolder, Notice, Platform } from
 import { FileTreeView } from './FileTreeView';
 import { ZoomInIcon, ZoomOutIcon, ZoomOutDoubleIcon, LocationIcon, SpaceIcon } from './utils/icons';
 import { FileTreeAlternativePluginSettings, FileTreeAlternativePluginSettingsTab, DEFAULT_SETTINGS } from './settings';
-import { FileTreeViewMode, VaultChange, eventTypes } from 'utils/types';
+import { FileTreeViewMode, VaultChange, VaultChangeDetail, eventTypes } from 'utils/types';
 import { getBookmarkTitle } from 'utils/Utils';
 import { ensureNoteProperties, ensureNotePropertiesWithNotice, isMarkdownFile } from 'utils/noteProperties';
 import { getPageText } from 'utils/noteContent';
+import { DebouncedBatchQueue, getMobilePerformancePolicy } from './mobilePerformance';
 
 const FileFocusIcon = `
     <g fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
@@ -34,6 +35,14 @@ export default class FileTreeAlternativePlugin extends Plugin {
     inboxMorningBriefRibbonIconEl: HTMLElement | undefined = undefined;
     ribbonMutationObserver: MutationObserver | undefined = undefined;
     folderRevealListeners = new Set<(folder: TFolder) => void>();
+    mountedFileTreeViews = new Set<FileTreeView>();
+    mobileVaultChangeQueue = new DebouncedBatchQueue<VaultChangeDetail>(
+        250,
+        (change) => `${change.changeType}:${change.oldPath}:${change.file.path}`,
+        (changes) => {
+            window.dispatchEvent(new CustomEvent(eventTypes.vaultChanges, { detail: { changes } }));
+        }
+    );
 
     keys = {
         activeFolderPathKey: 'fjgFileFocus-ActiveFolderPath',
@@ -71,7 +80,9 @@ export default class FileTreeAlternativePlugin extends Plugin {
 
         // Event Listeners
         this.app.workspace.onLayoutReady(async () => {
-            if (this.settings.openViewOnStart) {
+            if (this.isMobilePerformanceModeEnabled()) {
+                this.detachSuspendedFileTreeLeafs();
+            } else if (this.settings.openViewOnStart) {
                 await this.openFileTreeLeaf(!Platform.isMobile);
             }
         });
@@ -141,13 +152,8 @@ export default class FileTreeAlternativePlugin extends Plugin {
         this.addCommand({
             id: 'reveal-active-file',
             name: 'Reveal Active File',
-            callback: () => {
-                // Activate file tree pane
-                let leafs = this.app.workspace.getLeavesOfType(this.VIEW_TYPE);
-                if (leafs.length === 0) this.openFileTreeLeaf(true);
-                for (let leaf of leafs) {
-                    this.app.workspace.revealLeaf(leaf);
-                }
+            callback: async () => {
+                await this.openFileTreeLeaf(true);
                 // Run custom event
                 let event = new CustomEvent(eventTypes.revealFile, {
                     detail: {
@@ -182,6 +188,7 @@ export default class FileTreeAlternativePlugin extends Plugin {
 
     onunload() {
         console.log('Unloading FJG File Focus Plugin');
+        this.mobileVaultChangeQueue.clear();
         this.detachFileTreeLeafs();
         // Remove event listeners
         this.app.vault.off('create', this.onCreate);
@@ -202,6 +209,40 @@ export default class FileTreeAlternativePlugin extends Plugin {
     async saveSettings() {
         await this.saveData(this.settings);
     }
+
+    getMobilePerformancePolicy = (explicitlyOpened = false) =>
+        getMobilePerformancePolicy({
+            enabled: this.settings?.mobilePerformanceMode ?? DEFAULT_SETTINGS.mobilePerformanceMode,
+            isMobile: Platform.isMobile,
+            openViewOnStart: this.settings?.openViewOnStart ?? DEFAULT_SETTINGS.openViewOnStart,
+            explicitlyOpened,
+            mountedViewCount: this.mountedFileTreeViews.size,
+        });
+
+    isMobilePerformanceModeEnabled = () => this.getMobilePerformancePolicy().active;
+
+    shouldBuildFolderTreeRecursively = () => this.getMobilePerformancePolicy().buildFolderTreeRecursively;
+
+    registerMountedFileTreeView = (view: FileTreeView) => {
+        this.mountedFileTreeViews.add(view);
+    };
+
+    unregisterMountedFileTreeView = (view: FileTreeView) => {
+        this.mountedFileTreeViews.delete(view);
+        if (this.isMobilePerformanceModeEnabled() && this.mountedFileTreeViews.size === 0) {
+            this.mobileVaultChangeQueue.clear();
+        }
+    };
+
+    applyMobilePerformanceModeChange = async () => {
+        if (!Platform.isMobile) return;
+
+        this.mobileVaultChangeQueue.clear();
+        this.detachFileTreeLeafs();
+        if (!this.isMobilePerformanceModeEnabled() && this.settings.openViewOnStart) {
+            await this.openFileTreeLeaf(false);
+        }
+    };
 
     openFocusPanel = async (view: FileTreeViewMode) => {
         await this.openFileTreeLeaf(true);
@@ -295,14 +336,18 @@ export default class FileTreeAlternativePlugin extends Plugin {
 
     triggerVaultChangeEvent = (file: TAbstractFile, changeType: VaultChange, oldPath?: string) => {
         if (this.isConfigFile(file)) return;
-        let event = new CustomEvent(eventTypes.vaultChange, {
-            detail: {
-                file: file,
-                changeType: changeType,
-                oldPath: oldPath ? oldPath : '',
-            },
-        });
-        window.dispatchEvent(event);
+        const detail: VaultChangeDetail = {
+            file,
+            changeType,
+            oldPath: oldPath ?? '',
+        };
+        const policy = this.getMobilePerformancePolicy();
+        if (policy.active) {
+            if (policy.dispatchViewRefreshes) this.mobileVaultChangeQueue.enqueue(detail);
+            return;
+        }
+
+        window.dispatchEvent(new CustomEvent(eventTypes.vaultChange, { detail }));
     };
 
     isConfigFile(file: TAbstractFile) {
@@ -399,15 +444,24 @@ export default class FileTreeAlternativePlugin extends Plugin {
     openFileTreeLeaf = async (showAfterAttach: boolean) => {
         let leafs = this.app.workspace.getLeavesOfType(this.VIEW_TYPE);
         if (leafs.length == 0) {
-            // Needs to be mounted
             let leaf = this.app.workspace.getLeftLeaf(false);
             await leaf.setViewState({ type: this.VIEW_TYPE });
-            if (showAfterAttach) this.app.workspace.revealLeaf(leaf);
-        } else {
-            // Already mounted - show if only selected showAfterAttach
-            if (showAfterAttach) {
-                leafs.forEach((leaf) => this.app.workspace.revealLeaf(leaf));
-            }
+            leafs = [leaf];
+        }
+
+        if (showAfterAttach || !this.isMobilePerformanceModeEnabled()) {
+            leafs.forEach((leaf) => (leaf.view as FileTreeView).activate());
+        }
+        if (showAfterAttach) {
+            leafs.forEach((leaf) => this.app.workspace.revealLeaf(leaf));
+        }
+    };
+
+    detachSuspendedFileTreeLeafs = () => {
+        const leafs = this.app.workspace.getLeavesOfType(this.VIEW_TYPE);
+        for (const leaf of leafs) {
+            const view = leaf.view as FileTreeView;
+            if (!view.isReactTreeMounted()) leaf.detach();
         }
     };
 

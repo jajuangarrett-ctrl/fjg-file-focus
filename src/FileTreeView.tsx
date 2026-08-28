@@ -8,7 +8,7 @@ import { RecoilRoot } from 'recoil';
 export class FileTreeView extends ItemView {
     plugin: FileTreeAlternativePlugin;
     currentFolderPath: string;
-    root: Root;
+    root: Root | undefined;
 
     constructor(leaf: WorkspaceLeaf, plugin: FileTreeAlternativePlugin) {
         super(leaf);
@@ -32,17 +32,31 @@ export class FileTreeView extends ItemView {
     }
 
     destroy() {
-        if (this.root) this.root.unmount();
+        if (this.root) {
+            this.root.unmount();
+            this.root = undefined;
+            this.plugin.unregisterMountedFileTreeView(this);
+        }
+        this.contentEl.empty();
     }
 
     async onOpen(): Promise<void> {
         this.destroy();
-        this.constructFileTree(this.app.vault.getRoot().path, '');
+        if (this.plugin.getMobilePerformancePolicy(false).mountReactTree) this.activate();
+    }
+
+    activate() {
+        if (!this.root) this.constructFileTree(this.app.vault.getRoot().path, '');
+    }
+
+    isReactTreeMounted() {
+        return Boolean(this.root);
     }
 
     constructFileTree(folderPath: string, vaultChange: string) {
         this.destroy();
         this.root = createRoot(this.contentEl);
+        this.plugin.registerMountedFileTreeView(this);
         this.root.render(
             <div className="file-tree-plugin-view">
                 <RecoilRoot>

@@ -11,6 +11,7 @@ import * as Icons from 'utils/icons';
 import { FolderSortType } from 'settings';
 import useForceUpdate from 'hooks/ForceUpdate';
 import { FolderTree } from 'utils/types';
+import * as FileTreeUtils from 'utils/Utils';
 
 interface FolderProps {
     plugin: FileTreeAlternativePlugin;
@@ -143,8 +144,18 @@ export function MainFolder(props: FolderProps) {
 
     const explandAllFolders = () => {
         let newOpenFolders: string[] = [];
+        const treeToExpand = plugin.isMobilePerformanceModeEnabled()
+            ? FileTreeUtils.createFolderTree({
+                  startFolder: focusedFolder,
+                  plugin,
+                  excludedFolders: FileTreeUtils.settingListToArray(plugin.settings.excludedFolders),
+                  recursive: true,
+              })
+            : folderTree;
 
-        newOpenFolders.push(folderTree.folder.path);
+        if (!treeToExpand) return;
+
+        newOpenFolders.push(treeToExpand.folder.path);
 
         const recursiveFx = (folderTreeChildren: FolderTree[]) => {
             for (let folderTreeChild of folderTreeChildren) {
@@ -155,7 +166,7 @@ export function MainFolder(props: FolderProps) {
             }
         };
 
-        recursiveFx(folderTree.children);
+        recursiveFx(treeToExpand.children);
         setOpenFolders(newOpenFolders);
     };
 

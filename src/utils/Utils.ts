@@ -189,29 +189,36 @@ export const isFolderNote = (t: TFile) => {
 };
 
 // Helper Function to Create Folder Tree
-export const createFolderTree = (params: { startFolder: TFolder; excludedFolders: string[]; plugin: FileTreeAlternativePlugin }): FolderTree => {
-    const { startFolder, excludedFolders, plugin } = params;
+export const createFolderTree = (params: {
+    startFolder: TFolder;
+    excludedFolders: string[];
+    plugin: FileTreeAlternativePlugin;
+    recursive?: boolean;
+}): FolderTree => {
+    const { startFolder, excludedFolders, plugin, recursive: buildRecursively = true } = params;
     let fileTree: { folder: TFolder; children: any } = { folder: startFolder, children: [] };
     function recursive(folder: TFolder, object: { folder: TFolder; children: any }) {
         if (!(folder && folder.children)) return;
         for (let child of folder.children) {
             if (child instanceof TFolder) {
                 let childFolder: TFolder = child as TFolder;
-                if (
-                    (plugin.settings.hideAttachments && child.path.toLowerCase().includes(plugin.settings.attachmentsFolderName.toLowerCase())) ||
-                    (excludedFolders.length > 0 && isPathInExcludedFolder(child.path, excludedFolders))
-                ) {
-                    continue;
-                }
+                if (shouldExcludeFolder(childFolder, plugin, excludedFolders)) continue;
                 let newObj: { folder: TFolder; children: any } = { folder: childFolder, children: [] };
                 object.children.push(newObj);
-                if (childFolder.children) recursive(childFolder, newObj);
+                if (buildRecursively && childFolder.children) recursive(childFolder, newObj);
             }
         }
     }
     recursive(startFolder, fileTree);
     return fileTree;
 };
+
+export const shouldExcludeFolder = (folder: TFolder, plugin: FileTreeAlternativePlugin, excludedFolders: string[]): boolean =>
+    (plugin.settings.hideAttachments && folder.path.toLowerCase().includes(plugin.settings.attachmentsFolderName.toLowerCase())) ||
+    (excludedFolders.length > 0 && isPathInExcludedFolder(folder.path, excludedFolders));
+
+export const hasVisibleChildFolder = (folder: TFolder, plugin: FileTreeAlternativePlugin, excludedFolders: string[]): boolean =>
+    folder.children.some((child) => child instanceof TFolder && !shouldExcludeFolder(child, plugin, excludedFolders));
 
 // Create Folder File Count Map
 export const getFolderNoteCountMap = (plugin: FileTreeAlternativePlugin) => {
