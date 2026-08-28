@@ -39,6 +39,10 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
     const [_showSubFolders, setShowSubFolders] = useRecoilState(recoilState.showSubFolders);
     const [focusedFolder, setFocusedFolder] = useRecoilState(recoilState.focusedFolder);
     const [activeOZFile, setActiveOzFile] = useRecoilState(recoilState.activeOZFile);
+    const focusedFolderRef = useRef<TFolder | null>(null);
+    const excludedFoldersRef = useRef<string[]>([]);
+    focusedFolderRef.current = focusedFolder;
+    excludedFoldersRef.current = excludedFolders;
 
     const setNewFileList = (folderPath?: string) => {
         let filesPath = folderPath ? folderPath : activeFolderPath;
@@ -117,7 +121,16 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
     };
 
     const vaultChangesEvent = (evt: CustomVaultChangeBatchEvent) => {
-        evt.detail.changes.forEach((change) => handleVaultChanges(change.file, change.changeType, change.oldPath));
+        const hasFolderChanges = evt.detail.changes.some((change) => change.file instanceof TFolder);
+        evt.detail.changes.forEach((change) =>
+            handleVaultChanges(change.file, change.changeType, change.oldPath, hasFolderChanges && change.file instanceof TFolder)
+        );
+        if (hasFolderChanges) {
+            rebuildCurrentFolderTree();
+            if (plugin.settings.folderCount && evt.detail.changes.some((change) => change.file instanceof TFolder && change.changeType !== 'modify')) {
+                setFolderFileCountMap(FileTreeUtils.getFolderNoteCountMap(plugin));
+            }
+        }
     };
 
     const changeActiveFile = (evt: Event) => {
@@ -255,7 +268,19 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
     }
 
     // Function for Event Handlers
-    function handleVaultChanges(file: TAbstractFile, changeType: VaultChange, oldPathBeforeRename?: string) {
+    function rebuildCurrentFolderTree() {
+        const currentFocusedFolder = focusedFolderRef.current ?? plugin.app.vault.getRoot();
+        setFolderTree(
+            FileTreeUtils.createFolderTree({
+                startFolder: currentFocusedFolder,
+                plugin,
+                excludedFolders: excludedFoldersRef.current,
+                recursive: plugin.shouldBuildFolderTreeRecursively(),
+            })
+        );
+    }
+
+    function handleVaultChanges(file: TAbstractFile, changeType: VaultChange, oldPathBeforeRename?: string, deferFolderRefresh = false) {
         // Get Current States from Setters
         let currentActiveFolderPath: string = '';
 
@@ -360,19 +385,7 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
         // Folder Event Handlers
         else if (file instanceof TFolder) {
             FileTreeUtils.invalidateRootFolderColorCache(plugin);
-            let currentFocusedFolder: TFolder = null;
-            setFocusedFolder((focusedFolder) => {
-                currentFocusedFolder = focusedFolder;
-                return focusedFolder;
-            });
-            setFolderTree(
-                FileTreeUtils.createFolderTree({
-                    startFolder: currentFocusedFolder,
-                    plugin,
-                    excludedFolders,
-                    recursive: plugin.shouldBuildFolderTreeRecursively(),
-                })
-            );
+            if (!deferFolderRefresh) rebuildCurrentFolderTree();
             // if active folder is renamed, activefolderpath needs to be refreshed
             if (changeType === 'rename' && oldPathBeforeRename && currentActiveFolderPath === oldPathBeforeRename) {
                 setActiveFolderPath(file.path);
@@ -391,7 +404,7 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
                         oldPath: oldPathBeforeRename,
                     })
                 );
-            } else {
+            } else if (!deferFolderRefresh) {
                 // Folder changes are uncommon and can alter every descendant path.
                 setFolderFileCountMap(FileTreeUtils.getFolderNoteCountMap(plugin));
             }
