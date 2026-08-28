@@ -80,9 +80,10 @@ export default class FileTreeAlternativePlugin extends Plugin {
 
         // Event Listeners
         this.app.workspace.onLayoutReady(async () => {
-            if (this.isMobilePerformanceModeEnabled()) {
+            const policy = this.getMobilePerformancePolicy();
+            if (policy.active) {
                 this.detachSuspendedFileTreeLeafs();
-            } else if (this.settings.openViewOnStart) {
+            } else if (policy.attachViewOnLayoutReady) {
                 await this.openFileTreeLeaf(!Platform.isMobile);
             }
         });
@@ -168,7 +169,8 @@ export default class FileTreeAlternativePlugin extends Plugin {
         this.addCommand({
             id: ' create-new-note',
             name: 'Create a New Note',
-            callback: () => {
+            callback: async () => {
+                await this.openFileTreeLeaf(true);
                 let event = new CustomEvent(eventTypes.createNewNote, {
                     detail: {},
                 });
@@ -280,7 +282,7 @@ export default class FileTreeAlternativePlugin extends Plugin {
         return () => this.folderRevealListeners.delete(listener);
     };
 
-    bookmarksEventHandler = (event: Event) => {
+    bookmarksEventHandler = async (event: Event) => {
         // Find the tree-item that includes the bookmarks plugin title
         let treeItem: Element = (event.target as any).closest('.tree-item');
         if (!treeItem) return;
@@ -294,6 +296,7 @@ export default class FileTreeAlternativePlugin extends Plugin {
             if (!bookmarkItem) return;
             event.stopImmediatePropagation();
             if (bookmarkItem.type === 'file') {
+                await this.openFileTreeLeaf(true);
                 // Dispatch Reveal File Event
                 let customEvent = new CustomEvent(eventTypes.revealFile, {
                     detail: {
@@ -303,6 +306,7 @@ export default class FileTreeAlternativePlugin extends Plugin {
                 window.dispatchEvent(customEvent);
             } else if (bookmarkItem.type === 'folder') {
                 event.stopImmediatePropagation();
+                await this.openFileTreeLeaf(true);
                 // Dispatch Reveal Folder Event
                 let customEvent = new CustomEvent(eventTypes.revealFolder, {
                     detail: {
@@ -343,7 +347,13 @@ export default class FileTreeAlternativePlugin extends Plugin {
         };
         const policy = this.getMobilePerformancePolicy();
         if (policy.active) {
-            if (policy.dispatchViewRefreshes) this.mobileVaultChangeQueue.enqueue(detail);
+            if (!policy.dispatchViewRefreshes) return;
+            if (changeType === 'modify') {
+                this.mobileVaultChangeQueue.enqueue(detail);
+            } else {
+                this.mobileVaultChangeQueue.flush();
+                window.dispatchEvent(new CustomEvent(eventTypes.vaultChanges, { detail: { changes: [detail] } }));
+            }
             return;
         }
 
@@ -454,6 +464,13 @@ export default class FileTreeAlternativePlugin extends Plugin {
         }
         if (showAfterAttach) {
             leafs.forEach((leaf) => this.app.workspace.revealLeaf(leaf));
+            await this.waitForFileTreeViewReady();
+        }
+    };
+
+    waitForFileTreeViewReady = async () => {
+        for (let attempt = 0; attempt < 24 && this.folderRevealListeners.size === 0; attempt += 1) {
+            await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
         }
     };
 
