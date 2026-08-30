@@ -82,7 +82,7 @@ export default class FileTreeAlternativePlugin extends Plugin {
         this.app.workspace.onLayoutReady(async () => {
             const policy = this.getMobilePerformancePolicy();
             if (policy.attachViewOnLayoutReady) {
-                await this.openFileTreeLeaf(!Platform.isMobile);
+                await this.openFileTreeLeaf(policy.revealViewOnLayoutReady);
             }
         });
 

@@ -19,6 +19,7 @@ test('mobile performance mode defaults to the existing eager behavior when disab
 
     assert.equal(policy.active, false);
     assert.equal(policy.attachViewOnLayoutReady, true);
+    assert.equal(policy.revealViewOnLayoutReady, true);
     assert.equal(policy.mountReactTree, true);
     assert.equal(policy.buildFolderTreeRecursively, true);
     assert.equal(policy.dispatchViewRefreshes, true);
@@ -41,6 +42,7 @@ test('mobile performance mode defers startup work until an explicit open', () =>
     });
 
     assert.equal(startupPolicy.attachViewOnLayoutReady, true);
+    assert.equal(startupPolicy.revealViewOnLayoutReady, true);
     assert.equal(startupPolicy.mountReactTree, false);
     assert.equal(startupPolicy.buildFolderTreeRecursively, false);
     assert.equal(startupPolicy.dispatchViewRefreshes, false);
@@ -81,9 +83,24 @@ test('desktop behavior is unchanged even when the mobile toggle is enabled', () 
 
     assert.equal(policy.active, false);
     assert.equal(policy.attachViewOnLayoutReady, true);
+    assert.equal(policy.revealViewOnLayoutReady, true);
     assert.equal(policy.mountReactTree, true);
     assert.equal(policy.buildFolderTreeRecursively, true);
     assert.equal(policy.dispatchViewRefreshes, true);
+});
+
+test('open on start controls both startup attachment and startup reveal', () => {
+    const policy = getMobilePerformancePolicy({
+        enabled: true,
+        isMobile: true,
+        openViewOnStart: false,
+        explicitlyOpened: false,
+        mountedViewCount: 0,
+    });
+
+    assert.equal(policy.attachViewOnLayoutReady, false);
+    assert.equal(policy.revealViewOnLayoutReady, false);
+    assert.equal(policy.mountReactTree, false);
 });
 
 test('refresh queue groups a burst and coalesces duplicate keys', () => {

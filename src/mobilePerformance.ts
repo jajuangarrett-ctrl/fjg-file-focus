@@ -11,6 +11,7 @@ export const DEFAULT_MOBILE_PERFORMANCE_MODE = false;
 export interface MobilePerformancePolicy {
     active: boolean;
     attachViewOnLayoutReady: boolean;
+    revealViewOnLayoutReady: boolean;
     mountReactTree: boolean;
     buildFolderTreeRecursively: boolean;
     dispatchViewRefreshes: boolean;
@@ -24,6 +25,7 @@ export const getMobilePerformancePolicy = (input: MobilePerformancePolicyInput):
         // Performance mode defers the React tree, not the lightweight sidebar leaf.
         // Keeping the leaf attached lets a restored mobile tab activate when shown.
         attachViewOnLayoutReady: input.openViewOnStart,
+        revealViewOnLayoutReady: input.openViewOnStart,
         mountReactTree: !active || input.explicitlyOpened,
         buildFolderTreeRecursively: !active,
         dispatchViewRefreshes: !active || input.mountedViewCount > 0,

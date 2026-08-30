@@ -1,5 +1,12 @@
 # Releases
 
+## 0.1.35
+
+- Fixed File Focus remaining hidden after a full Obsidian Mobile restart even when **Open on Start** was enabled.
+- Made **Open on Start** reveal the File Focus sidebar on mobile as well as desktop, independently of the Mobile performance mode toggle.
+- Added regression coverage showing that startup attachment and startup reveal follow the same setting.
+- Retained the v0.1.34 deferred-tree and reduced-folder rendering safeguards when Mobile performance mode is enabled.
+
 ## 0.1.34
 
 - Fixed the blank mobile sidebar that could occur with **Mobile performance mode** enabled when Obsidian restored the File Focus tab without explicitly running the plugin's open command.
