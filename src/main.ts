@@ -36,6 +36,7 @@ export default class FileTreeAlternativePlugin extends Plugin {
     ribbonMutationObserver: MutationObserver | undefined = undefined;
     folderRevealListeners = new Set<(folder: TFolder) => void>();
     mountedFileTreeViews = new Set<FileTreeView>();
+    hydratingFileTreeLeaves = new WeakSet<WorkspaceLeaf>();
     mobileVaultChangeQueue = new DebouncedBatchQueue<VaultChangeDetail>(
         250,
         (change) => `${change.changeType}:${change.oldPath}:${change.file.path}`,
@@ -80,6 +81,7 @@ export default class FileTreeAlternativePlugin extends Plugin {
 
         // Event Listeners
         this.app.workspace.onLayoutReady(async () => {
+            this.scheduleRestoredLeafHydration();
             await this.hydrateRestoredFileTreeLeafs();
             const policy = this.getMobilePerformancePolicy();
             if (policy.attachViewOnLayoutReady) {
@@ -88,10 +90,18 @@ export default class FileTreeAlternativePlugin extends Plugin {
         });
 
         this.registerEvent(
-            this.app.workspace.on('active-leaf-change', (leaf) => {
-                if (leaf?.getViewState().type === this.VIEW_TYPE && typeof (leaf.view as FileTreeView).activateWhenVisible === 'function') {
+            this.app.workspace.on('active-leaf-change', async (leaf) => {
+                if (leaf?.getViewState().type !== this.VIEW_TYPE) return;
+                await this.hydrateFileTreeLeaf(leaf);
+                if (typeof (leaf.view as FileTreeView).activateWhenVisible === 'function') {
                     (leaf.view as FileTreeView).activateWhenVisible();
                 }
+            })
+        );
+
+        this.registerEvent(
+            this.app.workspace.on('layout-change', () => {
+                void this.hydrateRestoredFileTreeLeafs();
             })
         );
 
@@ -482,21 +492,37 @@ export default class FileTreeAlternativePlugin extends Plugin {
 
     isFileTreeViewReady = (leaf: WorkspaceLeaf) => typeof (leaf.view as FileTreeView).activate === 'function';
 
+    hydrateFileTreeLeaf = async (leaf: WorkspaceLeaf): Promise<void> => {
+        if (this.isFileTreeViewReady(leaf) || this.hydratingFileTreeLeaves.has(leaf)) return;
+        this.hydratingFileTreeLeaves.add(leaf);
+        try {
+            // Mobile workspace restoration can leave a hidden custom leaf as
+            // Obsidian's generic deferred view. Rebind the same leaf in place
+            // so selecting its native sidebar tab never produces a blank panel.
+            await leaf.setViewState({ type: 'empty' });
+            await leaf.setViewState({ type: this.VIEW_TYPE });
+        } catch (error) {
+            console.error('FJG File Focus could not rehydrate a restored sidebar leaf:', error);
+        } finally {
+            this.hydratingFileTreeLeaves.delete(leaf);
+        }
+    };
+
     hydrateRestoredFileTreeLeafs = async (): Promise<WorkspaceLeaf[]> => {
         const leafs = this.app.workspace.getLeavesOfType(this.VIEW_TYPE);
         for (const leaf of leafs) {
-            if (this.isFileTreeViewReady(leaf)) continue;
-            try {
-                // Mobile workspace restoration can leave a hidden custom leaf as
-                // Obsidian's generic deferred view. Rebind the same leaf in place
-                // so selecting its native sidebar tab never produces a blank panel.
-                await leaf.setViewState({ type: 'empty' });
-                await leaf.setViewState({ type: this.VIEW_TYPE });
-            } catch (error) {
-                console.error('FJG File Focus could not rehydrate a restored sidebar leaf:', error);
-            }
+            await this.hydrateFileTreeLeaf(leaf);
         }
         return leafs;
+    };
+
+    scheduleRestoredLeafHydration = () => {
+        [0, 100, 500, 1500].forEach((delay) => {
+            const timeoutId = window.setTimeout((): void => {
+                void this.hydrateRestoredFileTreeLeafs();
+            }, delay);
+            this.register(() => window.clearTimeout(timeoutId));
+        });
     };
 
     waitForFileTreeViewReady = async () => {
