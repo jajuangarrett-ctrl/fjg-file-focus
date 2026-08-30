@@ -1,4 +1,4 @@
-import { Plugin, addIcon, TAbstractFile, TFile, TFolder, Notice, Platform } from 'obsidian';
+import { Plugin, addIcon, TAbstractFile, TFile, TFolder, Notice, Platform, WorkspaceLeaf } from 'obsidian';
 import { FileTreeView } from './FileTreeView';
 import { ZoomInIcon, ZoomOutIcon, ZoomOutDoubleIcon, LocationIcon, SpaceIcon } from './utils/icons';
 import { FileTreeAlternativePluginSettings, FileTreeAlternativePluginSettingsTab, DEFAULT_SETTINGS } from './settings';
@@ -80,6 +80,7 @@ export default class FileTreeAlternativePlugin extends Plugin {
 
         // Event Listeners
         this.app.workspace.onLayoutReady(async () => {
+            await this.hydrateRestoredFileTreeLeafs();
             const policy = this.getMobilePerformancePolicy();
             if (policy.attachViewOnLayoutReady) {
                 await this.openFileTreeLeaf(policy.revealViewOnLayoutReady);
@@ -458,11 +459,11 @@ export default class FileTreeAlternativePlugin extends Plugin {
     };
 
     openFileTreeLeaf = async (showAfterAttach: boolean) => {
-        let leafs = this.app.workspace.getLeavesOfType(this.VIEW_TYPE);
-        for (const leaf of leafs.filter((candidate) => typeof (candidate.view as FileTreeView).activate !== 'function')) {
+        let leafs = await this.hydrateRestoredFileTreeLeafs();
+        for (const leaf of leafs.filter((candidate) => !this.isFileTreeViewReady(candidate))) {
             leaf.detach();
         }
-        leafs = leafs.filter((leaf) => typeof (leaf.view as FileTreeView).activate === 'function');
+        leafs = leafs.filter((leaf) => this.isFileTreeViewReady(leaf));
 
         if (leafs.length == 0) {
             let leaf = this.app.workspace.getLeftLeaf(false);
@@ -477,6 +478,25 @@ export default class FileTreeAlternativePlugin extends Plugin {
             leafs.forEach((leaf) => this.app.workspace.revealLeaf(leaf));
             await this.waitForFileTreeViewReady();
         }
+    };
+
+    isFileTreeViewReady = (leaf: WorkspaceLeaf) => typeof (leaf.view as FileTreeView).activate === 'function';
+
+    hydrateRestoredFileTreeLeafs = async (): Promise<WorkspaceLeaf[]> => {
+        const leafs = this.app.workspace.getLeavesOfType(this.VIEW_TYPE);
+        for (const leaf of leafs) {
+            if (this.isFileTreeViewReady(leaf)) continue;
+            try {
+                // Mobile workspace restoration can leave a hidden custom leaf as
+                // Obsidian's generic deferred view. Rebind the same leaf in place
+                // so selecting its native sidebar tab never produces a blank panel.
+                await leaf.setViewState({ type: 'empty' });
+                await leaf.setViewState({ type: this.VIEW_TYPE });
+            } catch (error) {
+                console.error('FJG File Focus could not rehydrate a restored sidebar leaf:', error);
+            }
+        }
+        return leafs;
     };
 
     waitForFileTreeViewReady = async () => {
