@@ -88,7 +88,7 @@ export default class FileTreeAlternativePlugin extends Plugin {
 
         this.registerEvent(
             this.app.workspace.on('active-leaf-change', (leaf) => {
-                if (leaf?.getViewState().type === this.VIEW_TYPE) {
+                if (leaf?.getViewState().type === this.VIEW_TYPE && typeof (leaf.view as FileTreeView).activateWhenVisible === 'function') {
                     (leaf.view as FileTreeView).activateWhenVisible();
                 }
             })
@@ -459,6 +459,11 @@ export default class FileTreeAlternativePlugin extends Plugin {
 
     openFileTreeLeaf = async (showAfterAttach: boolean) => {
         let leafs = this.app.workspace.getLeavesOfType(this.VIEW_TYPE);
+        for (const leaf of leafs.filter((candidate) => typeof (candidate.view as FileTreeView).activate !== 'function')) {
+            leaf.detach();
+        }
+        leafs = leafs.filter((leaf) => typeof (leaf.view as FileTreeView).activate === 'function');
+
         if (leafs.length == 0) {
             let leaf = this.app.workspace.getLeftLeaf(false);
             await leaf.setViewState({ type: this.VIEW_TYPE });
@@ -483,7 +488,8 @@ export default class FileTreeAlternativePlugin extends Plugin {
     detachFileTreeLeafs = () => {
         let leafs = this.app.workspace.getLeavesOfType(this.VIEW_TYPE);
         for (let leaf of leafs) {
-            (leaf.view as FileTreeView).destroy();
+            const view = leaf.view as FileTreeView;
+            if (typeof view.destroy === 'function') view.destroy();
             leaf.detach();
         }
     };
