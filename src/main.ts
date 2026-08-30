@@ -81,12 +81,18 @@ export default class FileTreeAlternativePlugin extends Plugin {
         // Event Listeners
         this.app.workspace.onLayoutReady(async () => {
             const policy = this.getMobilePerformancePolicy();
-            if (policy.active) {
-                this.detachSuspendedFileTreeLeafs();
-            } else if (policy.attachViewOnLayoutReady) {
+            if (policy.attachViewOnLayoutReady) {
                 await this.openFileTreeLeaf(!Platform.isMobile);
             }
         });
+
+        this.registerEvent(
+            this.app.workspace.on('active-leaf-change', (leaf) => {
+                if (leaf?.getViewState().type === this.VIEW_TYPE) {
+                    (leaf.view as FileTreeView).activateWhenVisible();
+                }
+            })
+        );
 
         // Add Command to Open File Tree Leaf
         this.addCommand({
@@ -241,7 +247,7 @@ export default class FileTreeAlternativePlugin extends Plugin {
 
         this.mobileVaultChangeQueue.clear();
         this.detachFileTreeLeafs();
-        if (!this.isMobilePerformanceModeEnabled() && this.settings.openViewOnStart) {
+        if (this.settings.openViewOnStart) {
             await this.openFileTreeLeaf(false);
         }
     };
@@ -471,14 +477,6 @@ export default class FileTreeAlternativePlugin extends Plugin {
     waitForFileTreeViewReady = async () => {
         for (let attempt = 0; attempt < 24 && this.folderRevealListeners.size === 0; attempt += 1) {
             await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
-        }
-    };
-
-    detachSuspendedFileTreeLeafs = () => {
-        const leafs = this.app.workspace.getLeavesOfType(this.VIEW_TYPE);
-        for (const leaf of leafs) {
-            const view = leaf.view as FileTreeView;
-            if (!view.isReactTreeMounted()) leaf.detach();
         }
     };
 

@@ -10,7 +10,7 @@ FJG File Focus is an Obsidian sidebar plugin for Franklin Garrett's vault workfl
 - A checklist button between Home and New Folder that opens the native FJG Task Manager dashboard.
 - Automatic desktop active-note following that opens the note's parent folder, selects the note, and expands its folder path.
 - Standard mobile startup remains unchanged by default: the folder view is attached quietly for normal manual navigation, but it is not opened automatically and does not follow file-open events.
-- An optional **Mobile performance mode** keeps the React view and its listeners unmounted until File Focus is explicitly opened, builds deeper folder branches only as they are expanded, and groups repeated live refreshes.
+- An optional **Mobile performance mode** keeps the React view and its listeners unmounted until the File Focus sidebar is visible, builds deeper folder branches only as they are expanded, and groups repeated live refreshes.
 - Toolbar buttons for Recent Notes and Bookmarks in the folder toolbar.
 - Mobile-toolbar commands for deleting the current file and copying the page text—without YAML properties—to the clipboard.
 - Recent notes and bookmarks render inside the sidebar file-list area instead of opening a popup modal.
@@ -31,7 +31,7 @@ The production bundle is generated at `dist/main.js`.
 
 In **Settings → FJG File Focus**, turn on **Mobile performance mode** to reduce startup and hidden sidebar work on phones and tablets. The setting is off by default, applies only on mobile, and does not change desktop behavior.
 
-Changing the toggle takes effect immediately. On mobile, the current File Focus panel closes so its UI and listeners can be released; reopen it from the ribbon or the **Open FJG File Focus view** command when needed. No Obsidian restart is required. Turning the toggle off restores the standard v0.1.32 mobile path.
+Changing the toggle takes effect immediately. On mobile, File Focus keeps a lightweight deferred sidebar tab and automatically loads its folder tree when that tab becomes visible. A **Load folders** button remains available as a fallback. Deeper branches start collapsed on each deferred mount so a previously expanded desktop-sized tree cannot overwhelm the phone. No Obsidian restart is required. Turning the toggle off restores the standard eager mobile path.
 
 ## Local Install
 

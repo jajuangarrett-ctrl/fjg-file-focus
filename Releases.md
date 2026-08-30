@@ -1,5 +1,13 @@
 # Releases
 
+## 0.1.34
+
+- Fixed the blank mobile sidebar that could occur with **Mobile performance mode** enabled when Obsidian restored the File Focus tab without explicitly running the plugin's open command.
+- Kept a lightweight deferred File Focus leaf attached during mobile startup and automatically activated the React tree when the sidebar became visible.
+- Added a visible **Load folders** fallback when automatic visibility activation is unavailable.
+- Prevented restored expanded-folder state from recreating a desktop-sized tree during deferred mobile mounts; performance-mode sessions now start with branches collapsed.
+- Preserved desktop behavior and the existing branch-by-branch mobile rendering path.
+
 ## 0.1.33
 
 - Added a default-off **Mobile performance mode** setting. When off, the v0.1.32 mobile startup and navigation path remains in place.

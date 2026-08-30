@@ -21,12 +21,39 @@ export const getMobilePerformancePolicy = (input: MobilePerformancePolicyInput):
 
     return {
         active,
-        attachViewOnLayoutReady: input.openViewOnStart && !active,
+        // Performance mode defers the React tree, not the lightweight sidebar leaf.
+        // Keeping the leaf attached lets a restored mobile tab activate when shown.
+        attachViewOnLayoutReady: input.openViewOnStart,
         mountReactTree: !active || input.explicitlyOpened,
         buildFolderTreeRecursively: !active,
         dispatchViewRefreshes: !active || input.mountedViewCount > 0,
     };
 };
+
+export interface DeferredViewVisibilityInput {
+    isConnected: boolean;
+    display: string;
+    visibility: string;
+    width: number;
+    height: number;
+    top: number;
+    right: number;
+    bottom: number;
+    left: number;
+    viewportWidth: number;
+    viewportHeight: number;
+}
+
+export const shouldActivateDeferredView = (input: DeferredViewVisibilityInput): boolean =>
+    input.isConnected &&
+    input.display !== 'none' &&
+    input.visibility !== 'hidden' &&
+    input.width > 0 &&
+    input.height > 0 &&
+    input.right > 0 &&
+    input.bottom > 0 &&
+    input.left < input.viewportWidth &&
+    input.top < input.viewportHeight;
 
 type ScheduleTimeout = (callback: () => void, delayMs: number) => number;
 type CancelTimeout = (timeoutId: number) => void;

@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { DEFAULT_MOBILE_PERFORMANCE_MODE, DebouncedBatchQueue, getMobilePerformancePolicy } from '../src/mobilePerformance.ts';
+import {
+    DEFAULT_MOBILE_PERFORMANCE_MODE,
+    DebouncedBatchQueue,
+    getMobilePerformancePolicy,
+    shouldActivateDeferredView,
+} from '../src/mobilePerformance.ts';
 
 test('mobile performance mode defaults to the existing eager behavior when disabled', () => {
     assert.equal(DEFAULT_MOBILE_PERFORMANCE_MODE, false);
@@ -35,12 +40,34 @@ test('mobile performance mode defers startup work until an explicit open', () =>
         mountedViewCount: 1,
     });
 
-    assert.equal(startupPolicy.attachViewOnLayoutReady, false);
+    assert.equal(startupPolicy.attachViewOnLayoutReady, true);
     assert.equal(startupPolicy.mountReactTree, false);
     assert.equal(startupPolicy.buildFolderTreeRecursively, false);
     assert.equal(startupPolicy.dispatchViewRefreshes, false);
     assert.equal(openedPolicy.mountReactTree, true);
     assert.equal(openedPolicy.dispatchViewRefreshes, true);
+});
+
+test('deferred mobile view activates only after it is connected and visible', () => {
+    const visibleView = {
+        isConnected: true,
+        display: 'block',
+        visibility: 'visible',
+        width: 420,
+        height: 700,
+        top: 0,
+        right: 420,
+        bottom: 700,
+        left: 0,
+        viewportWidth: 430,
+        viewportHeight: 932,
+    };
+
+    assert.equal(shouldActivateDeferredView(visibleView), true);
+    assert.equal(shouldActivateDeferredView({ ...visibleView, isConnected: false }), false);
+    assert.equal(shouldActivateDeferredView({ ...visibleView, display: 'none' }), false);
+    assert.equal(shouldActivateDeferredView({ ...visibleView, left: -500, right: -80 }), false);
+    assert.equal(shouldActivateDeferredView({ ...visibleView, width: 0 }), false);
 });
 
 test('desktop behavior is unchanged even when the mobile toggle is enabled', () => {

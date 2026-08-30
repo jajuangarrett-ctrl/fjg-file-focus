@@ -217,6 +217,11 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
 
     // Load The String List and Set Open Folders State
     function getOpenFoldersFromSettings(): string[] {
+        // Restoring a desktop-sized expanded tree defeats mobile performance mode.
+        // Start collapsed on each deferred mobile mount; the current session still
+        // remembers branches as Franklin opens them.
+        if (plugin.isMobilePerformanceModeEnabled()) return [];
+
         let openFolders: string[] = [];
         let localStorageOpenFolders = localStorage.getItem(plugin.keys.openFoldersKey);
         if (localStorageOpenFolders) {
