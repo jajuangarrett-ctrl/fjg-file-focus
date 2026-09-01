@@ -1,5 +1,11 @@
 # Releases
 
+## 0.1.36
+
+- Fixed the File Focus mobile side panel remaining blank at launch until the open command was run.
+- When **Open on Start** is enabled, Mobile performance mode now mounts the reduced, nonrecursive folder tree immediately instead of depending on a later visibility callback.
+- Preserved deferred startup behavior when **Open on Start** is disabled, along with collapsed deep branches and batched mobile refreshes.
+
 ## 0.1.35
 
 - Fixed File Focus remaining hidden after a full Obsidian Mobile restart even when **Open on Start** was enabled.

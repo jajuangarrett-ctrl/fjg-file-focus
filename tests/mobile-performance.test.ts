@@ -25,7 +25,7 @@ test('mobile performance mode defaults to the existing eager behavior when disab
     assert.equal(policy.dispatchViewRefreshes, true);
 });
 
-test('mobile performance mode defers startup work until an explicit open', () => {
+test('mobile performance mode mounts the reduced tree when open on start is enabled', () => {
     const startupPolicy = getMobilePerformancePolicy({
         enabled: true,
         isMobile: true,
@@ -43,11 +43,34 @@ test('mobile performance mode defers startup work until an explicit open', () =>
 
     assert.equal(startupPolicy.attachViewOnLayoutReady, true);
     assert.equal(startupPolicy.revealViewOnLayoutReady, true);
-    assert.equal(startupPolicy.mountReactTree, false);
+    assert.equal(startupPolicy.mountReactTree, true);
     assert.equal(startupPolicy.buildFolderTreeRecursively, false);
     assert.equal(startupPolicy.dispatchViewRefreshes, false);
     assert.equal(openedPolicy.mountReactTree, true);
     assert.equal(openedPolicy.dispatchViewRefreshes, true);
+});
+
+test('mobile performance mode still defers hidden startup work when open on start is disabled', () => {
+    const hiddenStartupPolicy = getMobilePerformancePolicy({
+        enabled: true,
+        isMobile: true,
+        openViewOnStart: false,
+        explicitlyOpened: false,
+        mountedViewCount: 0,
+    });
+    const explicitlyOpenedPolicy = getMobilePerformancePolicy({
+        enabled: true,
+        isMobile: true,
+        openViewOnStart: false,
+        explicitlyOpened: true,
+        mountedViewCount: 0,
+    });
+
+    assert.equal(hiddenStartupPolicy.attachViewOnLayoutReady, false);
+    assert.equal(hiddenStartupPolicy.revealViewOnLayoutReady, false);
+    assert.equal(hiddenStartupPolicy.mountReactTree, false);
+    assert.equal(hiddenStartupPolicy.buildFolderTreeRecursively, false);
+    assert.equal(explicitlyOpenedPolicy.mountReactTree, true);
 });
 
 test('deferred mobile view activates only after it is connected and visible', () => {

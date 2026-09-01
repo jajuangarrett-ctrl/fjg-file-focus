@@ -26,7 +26,11 @@ export const getMobilePerformancePolicy = (input: MobilePerformancePolicyInput):
         // Keeping the leaf attached lets a restored mobile tab activate when shown.
         attachViewOnLayoutReady: input.openViewOnStart,
         revealViewOnLayoutReady: input.openViewOnStart,
-        mountReactTree: !active || input.explicitlyOpened,
+        // If the user asks File Focus to open on launch, mount the reduced
+        // mobile tree immediately. Waiting for a visibility callback here can
+        // leave a restored native sidebar leaf blank until an explicit command
+        // opens it. Deep branches remain deferred by the recursive-build policy.
+        mountReactTree: !active || input.openViewOnStart || input.explicitlyOpened,
         buildFolderTreeRecursively: !active,
         dispatchViewRefreshes: !active || input.mountedViewCount > 0,
     };
