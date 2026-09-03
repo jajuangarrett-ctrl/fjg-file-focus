@@ -5,6 +5,8 @@
 - Added a file-pane toolbar button that copies the selected Markdown note's page text without its YAML properties/frontmatter.
 - Kept the existing adjacent copy-file-path button as a separate action.
 - Added regression coverage for standard frontmatter, BOM/CRLF frontmatter, notes without frontmatter, and frontmatter-only notes.
+- Fixed another mobile cold-launch path that could leave the restored File Focus tab blank by explicitly loading Obsidian's deferred workspace view.
+- Extended mobile startup recovery checks across 15 seconds so large vault restoration cannot overwrite the first repair attempt.
 
 ## 0.1.36
 

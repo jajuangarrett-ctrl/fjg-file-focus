@@ -34,7 +34,7 @@ In **Settings → FJG File Focus**, turn on **Mobile performance mode** to reduc
 
 Changing the toggle takes effect immediately. On mobile, File Focus keeps a lightweight deferred sidebar tab when **Open on Start** is off and automatically loads its folder tree when that tab becomes visible. If **Open on Start** is enabled, the reduced folder tree mounts immediately and the sidebar is revealed after every mobile restart, so launch does not depend on a later visibility callback. A **Load folders** button remains available as a fallback for deferred tabs. Deeper branches start collapsed so a previously expanded desktop-sized tree cannot overwhelm the phone. No Obsidian restart is required. Turning the toggle off restores the standard eager mobile path while preserving the same startup-reveal setting.
 
-During workspace restoration, File Focus also rebinds any saved sidebar leaf that Obsidian initially represents as a generic deferred view. This keeps the native File Focus tab usable even when **Open on Start** is disabled.
+During workspace restoration, File Focus explicitly loads its saved deferred sidebar view through Obsidian's supported view API. When **Open on Start** is enabled, it retries that recovery across the longer cold-launch window needed by large mobile vaults so the selected File Focus tab does not remain blank.
 
 ## Local Install
 

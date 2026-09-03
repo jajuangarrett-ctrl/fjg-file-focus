@@ -82,8 +82,8 @@ export default class FileTreeAlternativePlugin extends Plugin {
         // Event Listeners
         this.app.workspace.onLayoutReady(async () => {
             this.scheduleRestoredLeafHydration();
-            await this.hydrateRestoredFileTreeLeafs();
             const policy = this.getMobilePerformancePolicy();
+            await this.hydrateRestoredFileTreeLeafs(policy.mountReactTree);
             if (policy.attachViewOnLayoutReady) {
                 await this.openFileTreeLeaf(policy.revealViewOnLayoutReady);
             }
@@ -92,7 +92,7 @@ export default class FileTreeAlternativePlugin extends Plugin {
         this.registerEvent(
             this.app.workspace.on('active-leaf-change', async (leaf) => {
                 if (leaf?.getViewState().type !== this.VIEW_TYPE) return;
-                await this.hydrateFileTreeLeaf(leaf);
+                await this.hydrateFileTreeLeaf(leaf, true);
                 if (typeof (leaf.view as FileTreeView).activateWhenVisible === 'function') {
                     (leaf.view as FileTreeView).activateWhenVisible();
                 }
@@ -101,7 +101,7 @@ export default class FileTreeAlternativePlugin extends Plugin {
 
         this.registerEvent(
             this.app.workspace.on('layout-change', () => {
-                void this.hydrateRestoredFileTreeLeafs();
+                void this.hydrateRestoredFileTreeLeafs(this.getMobilePerformancePolicy().mountReactTree);
             })
         );
 
@@ -469,15 +469,18 @@ export default class FileTreeAlternativePlugin extends Plugin {
     };
 
     openFileTreeLeaf = async (showAfterAttach: boolean) => {
-        let leafs = await this.hydrateRestoredFileTreeLeafs();
+        const policy = this.getMobilePerformancePolicy(showAfterAttach);
+        let leafs = await this.hydrateRestoredFileTreeLeafs(policy.mountReactTree);
         for (const leaf of leafs.filter((candidate) => !this.isFileTreeViewReady(candidate))) {
             leaf.detach();
         }
         leafs = leafs.filter((leaf) => this.isFileTreeViewReady(leaf));
 
         if (leafs.length == 0) {
-            let leaf = this.app.workspace.getLeftLeaf(false);
+            const leaf = this.app.workspace.getLeftLeaf(false);
+            if (!leaf) throw new Error('FJG File Focus could not create a left-sidebar view.');
             await leaf.setViewState({ type: this.VIEW_TYPE });
+            await this.hydrateFileTreeLeaf(leaf, true);
             leafs = [leaf];
         }
 
@@ -485,22 +488,33 @@ export default class FileTreeAlternativePlugin extends Plugin {
             leafs.forEach((leaf) => (leaf.view as FileTreeView).activate());
         }
         if (showAfterAttach) {
-            leafs.forEach((leaf) => this.app.workspace.revealLeaf(leaf));
+            await Promise.all(leafs.map((leaf) => this.app.workspace.revealLeaf(leaf)));
             await this.waitForFileTreeViewReady();
         }
     };
 
     isFileTreeViewReady = (leaf: WorkspaceLeaf) => typeof (leaf.view as FileTreeView).activate === 'function';
 
-    hydrateFileTreeLeaf = async (leaf: WorkspaceLeaf): Promise<void> => {
+    hydrateFileTreeLeaf = async (leaf: WorkspaceLeaf, forceLoad = false): Promise<void> => {
         if (this.isFileTreeViewReady(leaf) || this.hydratingFileTreeLeaves.has(leaf)) return;
+        if (!forceLoad) return;
+
         this.hydratingFileTreeLeaves.add(leaf);
         try {
-            // Mobile workspace restoration can leave a hidden custom leaf as
-            // Obsidian's generic deferred view. Rebind the same leaf in place
-            // so selecting its native sidebar tab never produces a blank panel.
+            // Obsidian Mobile restores background custom tabs as DeferredView
+            // instances. Explicitly load the selected File Focus tab before
+            // falling back to rebinding it; otherwise its native tab can be
+            // present while its content area remains blank after a cold launch.
+            if (leaf.isDeferred && typeof leaf.loadIfDeferred === 'function') {
+                await leaf.loadIfDeferred();
+            }
+            if (this.isFileTreeViewReady(leaf)) return;
+
             await leaf.setViewState({ type: 'empty' });
-            await leaf.setViewState({ type: this.VIEW_TYPE });
+            await leaf.setViewState({ type: this.VIEW_TYPE, active: Platform.isMobile });
+            if (leaf.isDeferred && typeof leaf.loadIfDeferred === 'function') {
+                await leaf.loadIfDeferred();
+            }
         } catch (error) {
             console.error('FJG File Focus could not rehydrate a restored sidebar leaf:', error);
         } finally {
@@ -508,18 +522,19 @@ export default class FileTreeAlternativePlugin extends Plugin {
         }
     };
 
-    hydrateRestoredFileTreeLeafs = async (): Promise<WorkspaceLeaf[]> => {
+    hydrateRestoredFileTreeLeafs = async (forceLoad = false): Promise<WorkspaceLeaf[]> => {
         const leafs = this.app.workspace.getLeavesOfType(this.VIEW_TYPE);
         for (const leaf of leafs) {
-            await this.hydrateFileTreeLeaf(leaf);
+            await this.hydrateFileTreeLeaf(leaf, forceLoad);
         }
         return leafs;
     };
 
     scheduleRestoredLeafHydration = () => {
-        [0, 100, 500, 1500].forEach((delay) => {
+        const retryDelays = Platform.isMobile ? [0, 250, 1000, 3000, 7000, 15000] : [0, 100, 500, 1500];
+        retryDelays.forEach((delay) => {
             const timeoutId = window.setTimeout((): void => {
-                void this.hydrateRestoredFileTreeLeafs();
+                void this.hydrateRestoredFileTreeLeafs(this.getMobilePerformancePolicy().mountReactTree);
             }, delay);
             this.register(() => window.clearTimeout(timeoutId));
         });
