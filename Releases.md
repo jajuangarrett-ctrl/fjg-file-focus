@@ -1,5 +1,11 @@
 # Releases
 
+## 0.1.37
+
+- Added a file-pane toolbar button that copies the selected Markdown note's page text without its YAML properties/frontmatter.
+- Kept the existing adjacent copy-file-path button as a separate action.
+- Added regression coverage for standard frontmatter, BOM/CRLF frontmatter, notes without frontmatter, and frontmatter-only notes.
+
 ## 0.1.36
 
 - Fixed the File Focus mobile side panel remaining blank at launch until the open command was run.

@@ -11,6 +11,7 @@ import useForceUpdate from 'hooks/ForceUpdate';
 import useLongPress from 'hooks/useLongPress';
 import * as FileViewHandlers from 'components/FileView/handlers';
 import { ensureNotePropertiesWithNotice, isMarkdownFile } from 'utils/noteProperties';
+import { getPageText } from 'utils/noteContent';
 import LazyLoad from 'react-lazy-load';
 
 interface FilesProps {
@@ -255,6 +256,26 @@ export function FileComponent(props: FilesProps) {
         }
     };
 
+    const copySelectedNotePageText = async () => {
+        const activeFile = plugin.app.workspace.getActiveFile();
+        const selectedPath = activeOzFile?.path || activeFile?.path;
+        const file = selectedPath ? plugin.app.vault.getAbstractFileByPath(selectedPath) : activeFile;
+
+        if (!(file instanceof TFile) || file.extension.toLowerCase() !== 'md') {
+            new Notice('Select a Markdown note first.');
+            return;
+        }
+
+        try {
+            const noteText = await plugin.app.vault.cachedRead(file);
+            await navigator.clipboard.writeText(getPageText(noteText));
+            new Notice('Copied page text without properties.');
+        } catch (error) {
+            console.error('FJG File Focus could not copy the selected note:', error);
+            new Notice('Could not copy the page text to the clipboard.');
+        }
+    };
+
     const executeCommandById = async (commandId: string, unavailableNotice: string): Promise<boolean> => {
         const commands = (plugin.app as any).commands;
 
@@ -432,6 +453,13 @@ export function FileComponent(props: FilesProps) {
                                                 onClick={openSemanticLinkSuggestions}
                                                 size={topIconSize - 1}
                                                 aria-label="Open Semantic Link Suggestions"
+                                            />
+                                        </div>
+                                        <div className="oz-nav-action-button">
+                                            <Icons.MdContentCopy
+                                                onClick={() => void copySelectedNotePageText()}
+                                                size={topIconSize}
+                                                aria-label="Copy Page Text Without Properties"
                                             />
                                         </div>
                                         <div className="oz-nav-action-button">
