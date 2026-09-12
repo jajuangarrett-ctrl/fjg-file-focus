@@ -57,3 +57,13 @@ For a GitHub release or BRAT install, attach:
 ## Upstream
 
 Forked from [`ozntel/file-tree-alternative`](https://github.com/ozntel/file-tree-alternative).
+
+## Live vault conversation
+
+Use the microphone beside the checklist in the folder toolbar, or run **Talk to Your Vault** from the command palette. Start a conversation to search across your vault, read relevant notes, create Markdown notes in existing folders, and save clear requested body edits immediately. The plugin reuses the saved FJG Objective Manager OpenAI key, or accepts a separate key in File Focus settings. Audio and relevant excerpts are sent to OpenAI while connected.
+
+A clearly identified note can open automatically and reveal its folder. Multiple search results appear in a popup with clickable note titles, full paths, and excerpts when content search is used. Select a result to open it and set the current note for follow-up voice requests. The conversation minimizes so the note stays visible. Use **Expand conversation** to see the transcript again.
+
+Search supports pagination and reports incomplete results. Binary attachments can be located and opened, but their contents are not interpreted. Edits preserve frontmatter and reject stale or ambiguous replacements. Configuration and credential files are excluded; protected agent-governance files cannot be edited. End conversation releases the microphone and prevents further voice edits.
+
+Desktop and mobile layouts are supported. Update through BRAT on devices that do not sync plugin files, and configure an API key on each device if plugin settings are not synced.
