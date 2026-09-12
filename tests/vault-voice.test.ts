@@ -29,12 +29,11 @@ test('vault search covers folders, returns exact source paths and excludes hidde
   assert.match(read.error, /Binary/);
 });
 
-test('search and read pagination report incomplete results instead of pretending the whole vault was read', async () => {
+test('search covers files beyond the old scan limit while note reading remains paged', async () => {
   const f = fixture(Object.fromEntries(Array.from({ length: 405 }, (_, i) => [`Notes/${String(i).padStart(3, '0')}.md`, i === 404 ? 'Needle' : 'Other'])));
   const first = await f.call('search_vault', { query: 'Needle', folder: '', mode: 'contents', offset: 0 }) as any;
-  assert.equal(first.search_complete, false); assert.equal(first.next_offset, 400);
-  const second = await f.call('search_vault', { query: 'Needle', folder: '', mode: 'contents', offset: first.next_offset }) as any;
-  assert.equal(second.matches.length, 1); assert.equal(second.search_complete, true);
+  assert.equal(first.search_complete, true); assert.equal(first.next_offset, null);
+  assert.equal(first.matches[0].path, 'Notes/404.md'); assert.equal(first.scanned_files, 405);
   f.files.set('Notes/Long.md', 'x'.repeat(15000));
   const read = await f.call('read_note', { path: 'Notes/Long.md', offset: 0 }) as any;
   assert.equal(read.text.length, 12000); assert.equal(read.next_offset, 12000);
@@ -75,4 +74,16 @@ test('creation, append and safe path boundaries prevent overwrite, duplicates an
   for (const path of ['../outside.md', '/absolute.md', '.obsidian/plugins/key.md', 'Notes/../outside.md', 'Notes\\outside.md', 'AGENTS.md']) assert.throws(() => vaultPath(path));
   assert.equal(canRead('Notes/Safe.md'), true);
   await assert.rejects(f.call('create_note', { path: 'AI Team/BKM/Agent System/Memory Brief.md', content: 'Overwrite rules' }), /Governance/);
+});
+
+test('ranked search scans beyond early matches, respects deep scope and reports exclusions', async () => {
+ const f=fixture(Object.fromEntries(Array.from({length:450},(_,i)=>[`Early/${i}.md`,'Budget item'])));
+ f.files.set('Z/Deep/Nested/Student Budget.md','Student budgets and staffing');
+ f.files.set('Z/Deep/Nested/Large.md','x'.repeat(512001));f.files.set('Z/Deep/Nested/Report.pdf','binary');
+ const all=await f.call('search_vault',{query:'student budget',folder:'',mode:'contents',offset:0}) as any;
+ assert.equal(all.matches[0].path,'Z/Deep/Nested/Student Budget.md');assert.equal(all.total_matches,451);assert.equal(all.scanned_files,451);assert.equal(all.next_offset,20);assert.equal(all.search_complete,false);assert.equal(all.excluded_files,1);
+ const scoped=await f.call('search_vault',{query:'student budgets',folder:'Z/Deep',mode:'contents',offset:0}) as any;
+ assert.equal(scoped.matches.length,1);assert.equal(scoped.skipped_this_page,1);assert.match(scoped.coverage,/Z\/Deep/);
+ const page=await f.call('search_vault',{query:'budget',folder:'Early',mode:'contents',offset:440}) as any;
+ assert.equal(page.matches.length,10);assert.equal(page.next_offset,null);assert.equal(page.scanned_files,450);
 });

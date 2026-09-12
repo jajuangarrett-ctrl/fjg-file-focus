@@ -24,7 +24,7 @@ export class VaultSearchResultsModal extends Modal {
   private render(): void {
     this.titleEl.setText('Choose a search result'); this.contentEl.empty();
     this.contentEl.createEl('p', { text: this.request.query ? `Matches for “${this.request.query}”` : 'Notes and files in your vault' });
-    this.contentEl.createEl('p', { cls: 'fjg-vault-live-caption', text: `${this.entries.size} matches shown · ${this.result.search_complete ? 'Search complete' : 'More files remain to search'}` });
+    this.contentEl.createEl('p', { cls: 'fjg-vault-live-caption', text: `${this.entries.size} of ${this.result.total_matches} matches shown. ${this.result.coverage}` });
     const list = this.contentEl.createEl('ul', { cls: 'fjg-vault-search-list' });
     for (const entry of this.entries.values()) {
       const item = list.createEl('li');
@@ -42,7 +42,7 @@ export class VaultSearchResultsModal extends Modal {
     }
     if (!this.entries.size) this.contentEl.createEl('p', { text: 'No matches on this page.' });
     if (this.result.next_offset !== null) {
-      const button = this.contentEl.createEl('button', { text: 'Find more matches' });
+      const button = this.contentEl.createEl('button', { text: 'Show more matches' });
       button.addEventListener('click', async () => {
         button.disabled = true;
         try { await this.more({ ...this.request, offset: this.result.next_offset! }); }

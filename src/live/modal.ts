@@ -9,6 +9,7 @@ export class VaultVoiceModal extends Modal {
   private closed = false;
   private muted = false;
   private status!: HTMLElement;
+  private coverage!: HTMLElement;
   private transcript!: HTMLElement;
   private saved!: HTMLElement;
   private sources!: HTMLElement;
@@ -35,6 +36,7 @@ export class VaultVoiceModal extends Modal {
     root.createEl('p', { cls: 'fjg-vault-live-intro', text: 'Ask about your notes, capture a thought, or say what to update. Clear edits save immediately.' });
     root.createEl('p', { cls: 'fjg-vault-live-caption', text: 'Microphone audio and relevant note excerpts go to OpenAI while connected. Uses your saved API key.' });
     this.status = root.createEl('p', { cls: 'fjg-vault-live-status', text: 'Ready to talk', attr: { role: 'status', 'aria-live': 'polite' } });
+    this.coverage = root.createEl('p', { cls: 'fjg-vault-live-coverage', attr: { role: 'status' } });
     const controls = root.createDiv({ cls: 'fjg-vault-live-controls' });
     this.startButton = controls.createEl('button', { text: 'Start conversation', cls: 'mod-cta' });
     this.startButton.addEventListener('click', () => void this.start());
@@ -82,6 +84,7 @@ export class VaultVoiceModal extends Modal {
       if (!this.closed) this.saved.createEl('p', { text: `${message}: ${path}` });
     }, (path) => this.addSource(path), (result, request) => {
       if (this.closed) return;
+      this.coverage.setText(result.coverage);
       if (this.resultsModal) { this.resultsModal.update(result, request); return; }
       if (result.matches.length < 2) return;
       this.resultsModal = new VaultSearchResultsModal(this.app, result, request, async (path) => {

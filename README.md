@@ -67,3 +67,7 @@ A clearly identified note can open automatically and reveal its folder. Multiple
 Search supports pagination and reports incomplete results. Binary attachments can be located and opened, but their contents are not interpreted. Edits preserve frontmatter and reject stale or ambiguous replacements. Configuration and credential files are excluded; protected agent-governance files cannot be edited. End conversation releases the microphone and prevents further voice edits.
 
 Desktop and mobile layouts are supported. Update through BRAT on devices that do not sync plugin files, and configure an API key on each device if plugin settings are not synced.
+
+## Broader live search
+
+Live search ranks individual keywords and common word forms instead of requiring an exact phrase. Search coverage is shown in the voice panel. Vault search scans the complete eligible folder/vault scope before paging results; hidden/protected files, unsupported content types, unreadable files and oversized notes are reported separately. Dashboard search covers all indexed objectives, including notes, updates and nested actions, with explicit status filters respected. Ranking is keyword-based, not semantic/vector search. Source matches remain ambiguous until the user identifies the intended note or objective.
