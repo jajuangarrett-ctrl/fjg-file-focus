@@ -15,6 +15,7 @@ export class VaultVoiceModal extends Modal {
   private startButton!: HTMLButtonElement;
   private muteButton!: HTMLButtonElement;
   private endButton!: HTMLButtonElement;
+  private expandButton!: HTMLButtonElement;
   private sourcePaths = new Set<string>();
   private lastSpeaker = '';
   private lastText?: HTMLElement;
@@ -29,7 +30,7 @@ export class VaultVoiceModal extends Modal {
     this.titleEl.setText('Talk to your vault');
     this.modalEl.addClass('fjg-vault-live-modal');
     const root = this.contentEl;
-    root.createEl('p', { text: 'Ask about your notes, capture a thought, or say what to update. Clear edits save immediately.' });
+    root.createEl('p', { cls: 'fjg-vault-live-intro', text: 'Ask about your notes, capture a thought, or say what to update. Clear edits save immediately.' });
     root.createEl('p', { cls: 'fjg-vault-live-caption', text: 'Microphone audio and relevant note excerpts go to OpenAI while connected. Uses your saved API key.' });
     this.status = root.createEl('p', { cls: 'fjg-vault-live-status', text: 'Ready to talk', attr: { role: 'status', 'aria-live': 'polite' } });
     const controls = root.createDiv({ cls: 'fjg-vault-live-controls' });
@@ -45,6 +46,8 @@ export class VaultVoiceModal extends Modal {
     });
     this.endButton = controls.createEl('button', { text: 'End conversation' });
     this.endButton.disabled = true; this.endButton.addEventListener('click', () => this.session?.end());
+    this.expandButton = controls.createEl('button', { text: 'Expand conversation', cls: 'fjg-vault-live-expand' });
+    this.expandButton.addEventListener('click', () => this.setCompact(false));
     this.audio = root.createEl('audio', { attr: { controls: '', autoplay: '', 'aria-label': 'Assistant voice playback' } });
     this.transcript = root.createDiv({ cls: 'fjg-vault-live-transcript', attr: { role: 'log', 'aria-label': 'Conversation', 'aria-live': 'polite' } });
     this.transcript.createEl('p', { cls: 'fjg-vault-live-caption', text: 'Try: “Find my notes about summer planning” or “Add this thought to my meeting note.”' });
@@ -70,7 +73,7 @@ export class VaultVoiceModal extends Modal {
       },
       create: async (path, content) => { await this.app.vault.create(path, content); },
       exists: (path) => !!this.app.vault.getAbstractFileByPath(path),
-      open: async (path) => { await this.app.workspace.getLeaf('tab').openFile(this.file(path)); }
+      open: (path) => this.showNote(path)
     };
     let session: VaultLiveSession;
     const tools = new VaultLiveTools(port, () => !this.closed && session.active, (path, message) => {
@@ -103,7 +106,20 @@ export class VaultVoiceModal extends Modal {
     if (this.closed || this.sourcePaths.has(path)) return;
     this.sourcePaths.add(path);
     const button = this.sources.createEl('button', { text: path.split('/').pop() || path, attr: { title: path, 'aria-label': `Open source ${path}` } });
-    button.addEventListener('click', () => { const file = this.app.vault.getAbstractFileByPath(path); if (file instanceof TFile) void this.app.workspace.getLeaf('tab').openFile(file); });
+    button.addEventListener('click', () => void this.showNote(path).catch(() => this.status.setText('The source note could not be opened.')));
+  }
+  private async showNote(path: string): Promise<void> {
+    const file = this.file(path);
+    const existing = this.app.workspace.getLeavesOfType('markdown').find((leaf) => leaf.getViewState().state?.file === path);
+    const leaf = existing || this.app.workspace.getLeaf('tab');
+    await leaf.openFile(file);
+    if (file.parent) await this.plugin.revealFolderPath(file.parent.path);
+    await this.app.workspace.revealLeaf(leaf);
+    this.setCompact(true);
+  }
+  private setCompact(compact: boolean): void {
+    this.modalEl.classList.toggle('is-compact', compact);
+    this.modalEl.closest('.modal-container')?.classList.toggle('fjg-vault-live-compact-host', compact);
   }
   private addTranscript(speaker: string, delta: string): void {
     if (this.closed) return;
