@@ -28,7 +28,7 @@ function tool(name: string, description: string, properties: Record<string, unkn
   } };
 }
 export const LIVE_TOOLS = [
-  tool('search_vault', 'Search files throughout the vault. Use filenames for any file type, or contents for text notes. Empty folder searches the entire vault. Follow next_offset until search_complete; results cite exact paths.', {
+  tool('search_vault', 'Search files throughout the vault. Use filenames for any file type, or contents for text notes. Empty folder searches the entire vault. Every request scans all eligible files before ranking results. next_offset pages matches only; skipped/excluded files remain outside coverage. Results cite exact paths.', {
     query: string, folder: string, mode: { type: 'string', enum: ['filenames', 'contents'] }, offset
   }),
   tool('read_note', 'Read a page of an exact text note with its revision and source path. Use next_offset for more. Binary attachments can be located but cannot be read as text.', { path: string, offset }),
