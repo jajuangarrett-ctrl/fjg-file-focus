@@ -116,13 +116,14 @@ export class VaultVoiceModal extends Modal {
     if (this.closed || this.sourcePaths.has(path)) return;
     this.sourcePaths.add(path);
     const button = this.sources.createEl('button', { text: path.split('/').pop() || path, attr: { title: path, 'aria-label': `Open source ${path}` } });
-    button.addEventListener('click', () => void this.showNote(path).catch(() => this.status.setText('The source note could not be opened.')));
+    button.addEventListener('click', () => void this.showNote(path).then(() => this.session?.selectedNote(path)).catch(() => this.status.setText('The source note could not be opened.')));
   }
   private async showNote(path: string): Promise<void> {
     const file = this.file(path);
     const existing = this.app.workspace.getLeavesOfType('markdown').find((leaf) => leaf.getViewState().state?.file === path);
     const leaf = existing || this.app.workspace.getLeaf('tab');
     await leaf.openFile(file);
+    this.selection.note = path;
     if (file.parent) await this.plugin.revealFolderPath(file.parent.path);
     await this.app.workspace.revealLeaf(leaf);
     this.setCompact(true);

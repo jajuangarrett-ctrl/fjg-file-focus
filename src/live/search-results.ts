@@ -2,6 +2,7 @@ import { Modal, Notice, type App } from 'obsidian';
 import type { VaultSearchRequest, VaultSearchResult } from './vault-tools';
 
 export class VaultSearchResultsModal extends Modal {
+  private opening = false;
   private entries = new Map<string, VaultSearchResult['matches'][number]>();
   private request: VaultSearchRequest;
   private result: VaultSearchResult;
@@ -29,9 +30,12 @@ export class VaultSearchResultsModal extends Modal {
       const item = list.createEl('li');
       const link = item.createEl('a', { text: entry.path.split('/').pop() || entry.path, href: '#', cls: 'internal-link', attr: { 'data-href': entry.path, 'aria-label': `Open ${entry.path}` } });
       link.addEventListener('click', async (event) => {
-        event.preventDefault();
+        event.preventDefault(); event.stopPropagation();
+        if (this.opening) return;
+        this.opening = true;
         try { await this.choose(entry.path); this.close(); }
         catch { new Notice('That result could not be opened. Search again if the note moved.'); }
+        finally { this.opening = false; }
       });
       item.createEl('div', { text: entry.path, cls: 'fjg-vault-search-path' });
       if (entry.excerpt) item.createEl('p', { text: entry.excerpt, cls: 'fjg-vault-search-excerpt' });
