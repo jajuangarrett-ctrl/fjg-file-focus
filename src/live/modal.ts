@@ -2,6 +2,7 @@ import { Modal, TFile, type App } from 'obsidian';
 import type FileTreeAlternativePlugin from '../main';
 import { VaultLiveSession, type LiveState } from './session';
 import { VaultLiveTools, type VaultPort } from './vault-tools';
+import { VaultSearchResultsModal } from './search-results';
 
 export class VaultVoiceModal extends Modal {
   private session?: VaultLiveSession;
@@ -17,6 +18,7 @@ export class VaultVoiceModal extends Modal {
   private endButton!: HTMLButtonElement;
   private expandButton!: HTMLButtonElement;
   private sourcePaths = new Set<string>();
+  private resultsModal?: VaultSearchResultsModal;
   private lastSpeaker = '';
   private lastText?: HTMLElement;
   private plugin: FileTreeAlternativePlugin;
@@ -78,7 +80,15 @@ export class VaultVoiceModal extends Modal {
     let session: VaultLiveSession;
     const tools = new VaultLiveTools(port, () => !this.closed && session.active, (path, message) => {
       if (!this.closed) this.saved.createEl('p', { text: `${message}: ${path}` });
-    }, (path) => this.addSource(path));
+    }, (path) => this.addSource(path), (result, request) => {
+      if (this.closed) return;
+      if (this.resultsModal) { this.resultsModal.update(result, request); return; }
+      if (result.matches.length < 2) return;
+      this.resultsModal = new VaultSearchResultsModal(this.app, result, request, async (path) => {
+        await this.showNote(path); this.addSource(path); session.selectedNote(path);
+      }, async (next) => { await tools.execute('search_vault', JSON.stringify(next)); }, () => { this.resultsModal = undefined; });
+      this.resultsModal.open();
+    });
     session = new VaultLiveSession(this.audio, {
       state: (state, message) => this.setState(state, message),
       transcript: (speaker, delta) => this.addTranscript(speaker, delta),
@@ -94,7 +104,7 @@ export class VaultVoiceModal extends Modal {
       await session.start(key, this.plugin.settings.liveBackendModel, context);
     } catch { session.dispose(); this.setState('error', 'Could not load the saved OpenAI key. Check File Focus voice settings.'); }
   }
-  onClose(): void { this.closed = true; this.session?.end(); this.release(); }
+  onClose(): void { this.closed = true; this.resultsModal?.close(); this.session?.end(); this.release(); }
   shutdown(): void { this.session?.end(); this.session?.dispose(); this.close(); }
   private setState(state: LiveState, message: string): void {
     if (this.closed) return;

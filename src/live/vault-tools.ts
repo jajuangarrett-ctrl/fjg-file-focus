@@ -1,4 +1,12 @@
 export interface VaultFile { path: string; size: number }
+export interface VaultSearchRequest { query: string; folder: string; mode: string; offset: number }
+export interface VaultSearchResult {
+  matches: Array<{ path: string; excerpt?: string; size: number }>;
+  next_offset: number | null;
+  search_complete: boolean;
+  candidate_files: number;
+  skipped_this_page: number;
+}
 export interface VaultPort {
   files(): VaultFile[];
   read(path: string): Promise<string>;
@@ -94,8 +102,11 @@ export class VaultLiveTools {
   private active: () => boolean;
   private notice: (path: string, message: string) => void;
   private source: (path: string) => void;
-  constructor(port: VaultPort, active: () => boolean, notice: (path: string, message: string) => void, source: (path: string) => void) {
+  private results: (result: VaultSearchResult, request: VaultSearchRequest) => void;
+  constructor(port: VaultPort, active: () => boolean, notice: (path: string, message: string) => void, source: (path: string) => void,
+    results: (result: VaultSearchResult, request: VaultSearchRequest) => void = () => {}) {
     this.port = port; this.active = active; this.notice = notice; this.source = source;
+    this.results = results;
   }
   private check(): void { if (!this.active()) throw new Error('The voice session ended. No further changes are allowed.'); }
   async execute(name: string, raw: string): Promise<unknown> {
@@ -166,6 +177,8 @@ export class VaultLiveTools {
       }
       if (index % 40 === 0) await new Promise((resolve) => setTimeout(resolve, 0));
     }
-    return { matches, next_offset: index < files.length ? index : null, search_complete: index >= files.length, candidate_files: files.length, skipped_this_page: skipped };
+    const result = { matches, next_offset: index < files.length ? index : null, search_complete: index >= files.length, candidate_files: files.length, skipped_this_page: skipped };
+    this.check(); this.results(result, { query, folder, mode, offset });
+    return result;
   }
 }

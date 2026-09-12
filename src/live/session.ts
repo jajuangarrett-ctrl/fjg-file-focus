@@ -85,6 +85,13 @@ export class VaultLiveSession {
 
   mute(muted: boolean): void { this.microphone?.getAudioTracks().forEach((track) => { track.enabled = !muted; }); }
 
+  selectedNote(path: string): void {
+    if (!this.active) return;
+    const content = `The user selected this exact search result: ${JSON.stringify(path)}. It is now open. Use it as the current note for follow-up references. Selection alone is not a new edit request.`;
+    this.send({ type: 'session.thinking.append', delegation_id: null, content });
+    this.send({ type: 'response.item.create', item: { type: 'message', role: 'user', content: [{ type: 'input_text', text: content }] } });
+  }
+
   end(): void {
     if (this.disposed || this.ending) return;
     this.ending = true;

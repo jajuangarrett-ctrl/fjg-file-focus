@@ -909,6 +909,12 @@ svg.oz-folder-toggle path {
 .fjg-vault-live-modal.is-compact .fjg-vault-live-sources,
 .fjg-vault-live-modal.is-compact audio { display: none; }
 .fjg-vault-live-modal.is-compact .fjg-vault-live-expand { display: inline-block; }
+.fjg-vault-search-modal { width: min(680px, 94vw); max-height: 85dvh; }
+.fjg-vault-search-list { list-style: none; margin: 0; padding: 0; max-height: 56dvh; overflow: auto; }
+.fjg-vault-search-list li { padding: 12px 0; border-bottom: 1px solid var(--background-modifier-border); }
+.fjg-vault-search-list a { display: inline-block; padding: 8px 0; font-weight: 600; overflow-wrap: anywhere; }
+.fjg-vault-search-path { color: var(--text-muted); font-size: var(--font-smallest); overflow-wrap: anywhere; }
+.fjg-vault-search-excerpt { font-size: var(--font-small); overflow-wrap: anywhere; }
 @media (max-width: 600px) {
   .oz-folders-action-items .fjg-vault-voice-button { width: 44px; min-height: 44px; height: 44px; }
   .fjg-vault-live-modal { width: 100%; max-height: 90dvh; padding-bottom: max(16px, env(safe-area-inset-bottom)); }
