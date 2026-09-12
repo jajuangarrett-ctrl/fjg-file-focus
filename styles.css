@@ -922,3 +922,8 @@ svg.oz-folder-toggle path {
   .fjg-vault-live-sources button { min-height: 44px; }
   .fjg-vault-live-transcript { max-height: 25dvh; }
 }
+
+/* Explicit voice readiness, including narrow mobile panels. */
+.fjg-vault-live-status { font-weight: 600; border: 2px solid var(--background-modifier-border); }
+.fjg-vault-live-status[data-state="connecting"] { border-color: var(--text-warning); }
+.fjg-vault-live-status[data-state="connected"] { border-color: var(--color-green); }

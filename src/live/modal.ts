@@ -35,7 +35,7 @@ export class VaultVoiceModal extends Modal {
     const root = this.contentEl;
     root.createEl('p', { cls: 'fjg-vault-live-intro', text: 'Ask about your notes, capture a thought, or say what to update. Clear edits save immediately.' });
     root.createEl('p', { cls: 'fjg-vault-live-caption', text: 'Microphone audio and relevant note excerpts go to OpenAI while connected. Uses your saved API key.' });
-    this.status = root.createEl('p', { cls: 'fjg-vault-live-status', text: 'Ready to talk', attr: { role: 'status', 'aria-live': 'polite' } });
+    this.status = root.createEl('p', { cls: 'fjg-vault-live-status', text: 'Microphone off — press Start conversation', attr: { role: 'status', 'aria-live': 'polite' } });
     this.coverage = root.createEl('p', { cls: 'fjg-vault-live-coverage', attr: { role: 'status' } });
     const controls = root.createDiv({ cls: 'fjg-vault-live-controls' });
     this.startButton = controls.createEl('button', { text: 'Start conversation', cls: 'mod-cta' });
@@ -46,7 +46,7 @@ export class VaultVoiceModal extends Modal {
       this.muted = !this.muted; this.session?.mute(this.muted);
       this.muteButton.setText(this.muted ? 'Unmute microphone' : 'Mute microphone');
       this.muteButton.setAttribute('aria-pressed', String(this.muted));
-      this.status.setText(this.muted ? 'Microphone muted' : 'Listening · GPT-Live-1');
+      this.status.setText(this.muted ? 'Microphone muted' : 'Ready — start speaking');
     });
     this.endButton = controls.createEl('button', { text: 'End conversation' });
     this.endButton.disabled = true; this.endButton.addEventListener('click', () => this.session?.end());
@@ -97,7 +97,7 @@ export class VaultVoiceModal extends Modal {
       transcript: (speaker, delta) => this.addTranscript(speaker, delta),
       execute: (name, args) => tools.execute(name, args)
     });
-    this.session = session; this.setState('connecting', 'Preparing vault conversation…');
+    this.session = session; this.setState('connecting', 'Connecting… Please wait before speaking.');
     try {
       const key = await this.plugin.resolveVoiceApiKey();
       if (this.closed || this.session !== session) return;
@@ -112,6 +112,8 @@ export class VaultVoiceModal extends Modal {
   private setState(state: LiveState, message: string): void {
     if (this.closed) return;
     this.status.setText(message); this.status.dataset.state = state;
+    this.startButton.setText(state === "connecting" ? "Connecting…" : state === "connected" ? "Conversation active" : "Start conversation");
+    this.status.setAttribute("aria-busy", String(state === "connecting"));
     this.startButton.disabled = ['connecting', 'connected', 'ending'].includes(state);
     this.muteButton.disabled = state !== 'connected'; this.endButton.disabled = !['connecting', 'connected'].includes(state);
   }
