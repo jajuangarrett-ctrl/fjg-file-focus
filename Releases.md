@@ -1,3 +1,9 @@
+## 0.3.1 — Voice readiness
+
+Voice panels now distinguish microphone off, connecting, and ready to speak. The Start button displays Connecting while waiting, and the prominent status turns green only after session.started. Playback restrictions cannot prematurely mark the session ready. Startup network latency is unchanged.
+
+Validation: builds and automated checks passed; idle, connecting, ready, and error controls were checked in running Obsidian using simulated UI state transitions. Physical phone audio was not retested.
+
 # Releases
 
 ## 0.1.37
