@@ -48,7 +48,7 @@ export function vaultPath(value: string): string {
   const path = value.normalize('NFC');
   if (!path || path !== path.trim() || /[\\\x00-\x1f]/.test(path) || path.startsWith('/') || /^[a-z]+:/i.test(path)) throw new Error('Use an exact vault-relative note path.');
   if (path.split('/').some((part) => !part || part === '.' || part === '..' || part.startsWith('.'))) throw new Error('Hidden files and traversal paths are not available.');
-  if (/(^|\/)(?:AGENTS|CLAUDE|GEMINI|SKILL)\.md$/i.test(path) || /(^|\/)(?:credentials?|secrets?|api[-_ ]?keys?)(?:\.|\/|$)/i.test(path)) throw new Error('This configuration or credential file is outside vault chat.');
+  if (/(^|\/)(?:AGENTS|CLAUDE|GEMINI|SKILL)\.md$/i.test(path) || /(^|\/)(?:passwords?|credentials?|secrets?|api[-_ ]?keys?)(?:\.|\/|$)/i.test(path)) throw new Error('This configuration or credential file is outside vault chat.');
   return path;
 }
 export function canRead(path: string): boolean { try { vaultPath(path); return true; } catch { return false; } }
