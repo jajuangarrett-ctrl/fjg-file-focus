@@ -13,6 +13,8 @@ export type EvernoteViewOption = 'Disabled' | 'Horizontal' | 'Vertical';
 const DEFAULT_EXCLUDED_FOLDERS = ['AI Team/_codex_task_logs', 'Artifacts/Agent Mission Control/runner-logs'].join(', ');
 
 export interface FileTreeAlternativePluginSettings {
+    liveApiKey: string;
+    liveBackendModel: string;
     openViewOnStart: boolean;
     mobilePerformanceMode: boolean;
     ribbonIcon: boolean;
@@ -51,6 +53,8 @@ export interface FileTreeAlternativePluginSettings {
 }
 
 export const DEFAULT_SETTINGS: FileTreeAlternativePluginSettings = {
+    liveApiKey: '',
+    liveBackendModel: 'gpt-5.6-terra',
     openViewOnStart: true,
     mobilePerformanceMode: DEFAULT_MOBILE_PERFORMANCE_MODE,
     ribbonIcon: true,
@@ -104,6 +108,14 @@ export class FileTreeAlternativePluginSettingsTab extends PluginSettingTab {
     display(): void {
         let { containerEl } = this;
         containerEl.empty();
+        new Setting(containerEl).setName('Vault voice API key').setDesc('Optional. Leave empty to reuse the OpenAI key already saved by FJG Objective Manager on this device.')
+            .addText((text) => { text.inputEl.type = 'password'; text.setValue(this.plugin.settings.liveApiKey).onChange(async (value) => {
+                this.plugin.settings.liveApiKey = value.trim(); await this.plugin.saveSettings();
+            }); });
+        new Setting(containerEl).setName('Vault voice backend model').setDesc('GPT-Live-1 handles speech; this model searches and edits notes.')
+            .addText((text) => text.setValue(this.plugin.settings.liveBackendModel).onChange(async (value) => {
+                this.plugin.settings.liveBackendModel = value.trim() || 'gpt-5.6-terra'; await this.plugin.saveSettings();
+            }));
 
         let lsh = new LocalStorageHandler({});
 

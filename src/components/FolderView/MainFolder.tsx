@@ -12,6 +12,7 @@ import { FolderSortType } from 'settings';
 import useForceUpdate from 'hooks/ForceUpdate';
 import { FolderTree } from 'utils/types';
 import * as FileTreeUtils from 'utils/Utils';
+import { LuMic } from 'react-icons/lu';
 
 interface FolderProps {
     plugin: FileTreeAlternativePlugin;
@@ -259,6 +260,11 @@ export function MainFolder(props: FolderProps) {
                     onClick={openTaskManagerDashboard}
                     aria-label="Open FJG Task Manager Dashboard"
                 />
+                <button type="button" className="oz-nav-action-button fjg-vault-voice-button"
+                    aria-label="Talk to your vault" title="Talk to your vault with GPT-Live"
+                    onClick={() => plugin.openVaultVoice({ folder: getSelectedFolder().path, note: activeOzFile?.path || '' })}>
+                    <LuMic size={folderActionItemSize} aria-hidden="true" />
+                </button>
                 <Icons.MdOutlineCreateNewFolder
                     className="oz-nav-action-button"
                     size={folderActionItemSize}

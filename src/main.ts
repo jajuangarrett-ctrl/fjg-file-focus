@@ -7,6 +7,7 @@ import { getBookmarkTitle } from 'utils/Utils';
 import { ensureNoteProperties, ensureNotePropertiesWithNotice, isMarkdownFile } from 'utils/noteProperties';
 import { getPageText } from 'utils/noteContent';
 import { DebouncedBatchQueue, getMobilePerformancePolicy } from './mobilePerformance';
+import { VaultVoiceModal } from './live/modal';
 
 const FileFocusIcon = `
     <g fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
@@ -30,6 +31,7 @@ const DELETE_CURRENT_FILE_COMMAND_ID = 'app:delete-file';
 const FILE_FOCUS_TRASH_ICON = 'fjg-file-focus-trash';
 
 export default class FileTreeAlternativePlugin extends Plugin {
+    private vaultVoiceModal: VaultVoiceModal | null = null;
     settings: FileTreeAlternativePluginSettings;
     ribbonIconEl: HTMLElement | undefined = undefined;
     inboxMorningBriefRibbonIconEl: HTMLElement | undefined = undefined;
@@ -73,6 +75,7 @@ export default class FileTreeAlternativePlugin extends Plugin {
         // Load Settings
         this.addSettingTab(new FileTreeAlternativePluginSettingsTab(this.app, this));
         await this.loadSettings();
+        this.addCommand({ id: 'talk-to-vault', name: 'Talk to Your Vault', callback: () => this.openVaultVoice() });
 
         // Register File Tree View
         this.registerView(this.VIEW_TYPE, (leaf) => {
@@ -206,6 +209,7 @@ export default class FileTreeAlternativePlugin extends Plugin {
     }
 
     onunload() {
+        this.vaultVoiceModal?.shutdown();
         console.log('Unloading FJG File Focus Plugin');
         this.mobileVaultChangeQueue.clear();
         this.detachFileTreeLeafs();
@@ -227,6 +231,22 @@ export default class FileTreeAlternativePlugin extends Plugin {
 
     async saveSettings() {
         await this.saveData(this.settings);
+    }
+
+    openVaultVoice(selection = { folder: '', note: '' }): void {
+        if (this.vaultVoiceModal) return;
+        this.vaultVoiceModal = new VaultVoiceModal(this.app, this, selection, () => { this.vaultVoiceModal = null; });
+        this.vaultVoiceModal.open();
+    }
+
+    async resolveVoiceApiKey(): Promise<string> {
+        if (this.settings.liveApiKey?.trim()) return this.settings.liveApiKey.trim();
+        const tasks = (this.app as any).plugins?.plugins?.['fjg-task-manager'];
+        if (typeof tasks?.resolveOpenAiApiKey === 'function') return await tasks.resolveOpenAiApiKey();
+        try {
+            const saved = JSON.parse(await this.app.vault.adapter.read(`${this.app.vault.configDir}/plugins/fjg-task-manager/data.json`));
+            return typeof saved.openAiApiKey === 'string' ? saved.openAiApiKey.trim() : '';
+        } catch { return ''; }
     }
 
     getMobilePerformancePolicy = (explicitlyOpened = false) =>

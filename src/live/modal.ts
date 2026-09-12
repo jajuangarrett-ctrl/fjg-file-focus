@@ -1,0 +1,118 @@
+import { Modal, TFile, type App } from 'obsidian';
+import type FileTreeAlternativePlugin from '../main';
+import { VaultLiveSession, type LiveState } from './session';
+import { VaultLiveTools, type VaultPort } from './vault-tools';
+
+export class VaultVoiceModal extends Modal {
+  private session?: VaultLiveSession;
+  private closed = false;
+  private muted = false;
+  private status!: HTMLElement;
+  private transcript!: HTMLElement;
+  private saved!: HTMLElement;
+  private sources!: HTMLElement;
+  private audio!: HTMLAudioElement;
+  private startButton!: HTMLButtonElement;
+  private muteButton!: HTMLButtonElement;
+  private endButton!: HTMLButtonElement;
+  private sourcePaths = new Set<string>();
+  private lastSpeaker = '';
+  private lastText?: HTMLElement;
+  private plugin: FileTreeAlternativePlugin;
+  private selection: { folder: string; note: string };
+  private release: () => void;
+
+  constructor(app: App, plugin: FileTreeAlternativePlugin, selection: { folder: string; note: string }, release: () => void) {
+    super(app); this.plugin = plugin; this.selection = selection; this.release = release;
+  }
+  onOpen(): void {
+    this.titleEl.setText('Talk to your vault');
+    this.modalEl.addClass('fjg-vault-live-modal');
+    const root = this.contentEl;
+    root.createEl('p', { text: 'Ask about your notes, capture a thought, or say what to update. Clear edits save immediately.' });
+    root.createEl('p', { cls: 'fjg-vault-live-caption', text: 'Microphone audio and relevant note excerpts go to OpenAI while connected. Uses your saved API key.' });
+    this.status = root.createEl('p', { cls: 'fjg-vault-live-status', text: 'Ready to talk', attr: { role: 'status', 'aria-live': 'polite' } });
+    const controls = root.createDiv({ cls: 'fjg-vault-live-controls' });
+    this.startButton = controls.createEl('button', { text: 'Start conversation', cls: 'mod-cta' });
+    this.startButton.addEventListener('click', () => void this.start());
+    this.muteButton = controls.createEl('button', { text: 'Mute microphone', attr: { 'aria-pressed': 'false' } });
+    this.muteButton.disabled = true;
+    this.muteButton.addEventListener('click', () => {
+      this.muted = !this.muted; this.session?.mute(this.muted);
+      this.muteButton.setText(this.muted ? 'Unmute microphone' : 'Mute microphone');
+      this.muteButton.setAttribute('aria-pressed', String(this.muted));
+      this.status.setText(this.muted ? 'Microphone muted' : 'Listening · GPT-Live-1');
+    });
+    this.endButton = controls.createEl('button', { text: 'End conversation' });
+    this.endButton.disabled = true; this.endButton.addEventListener('click', () => this.session?.end());
+    this.audio = root.createEl('audio', { attr: { controls: '', autoplay: '', 'aria-label': 'Assistant voice playback' } });
+    this.transcript = root.createDiv({ cls: 'fjg-vault-live-transcript', attr: { role: 'log', 'aria-label': 'Conversation', 'aria-live': 'polite' } });
+    this.transcript.createEl('p', { cls: 'fjg-vault-live-caption', text: 'Try: “Find my notes about summer planning” or “Add this thought to my meeting note.”' });
+    this.sources = root.createDiv({ cls: 'fjg-vault-live-sources', attr: { 'aria-label': 'Source notes' } });
+    this.saved = root.createDiv({ cls: 'fjg-vault-live-saved', attr: { role: 'log', 'aria-label': 'Saved changes', 'aria-live': 'polite' } });
+  }
+  private file(path: string): TFile {
+    const file = this.app.vault.getAbstractFileByPath(path);
+    if (!(file instanceof TFile)) throw new Error('The note no longer exists.');
+    return file;
+  }
+  async start(): Promise<void> {
+    if (this.closed || this.startButton.disabled) return;
+    this.startButton.disabled = true; this.session?.dispose(); this.muted = false;
+    this.muteButton.setText('Mute microphone'); this.muteButton.setAttribute('aria-pressed', 'false');
+    this.lastSpeaker = ''; this.lastText = undefined;
+    const port: VaultPort = {
+      files: () => this.app.vault.getFiles().map((file) => ({ path: file.path, size: file.stat.size })),
+      read: (path) => this.app.vault.read(this.file(path)),
+      process: async (path, change) => {
+        if (typeof this.app.vault.process !== 'function') throw new Error('Update Obsidian to use atomic note edits.');
+        await this.app.vault.process(this.file(path), change);
+      },
+      create: async (path, content) => { await this.app.vault.create(path, content); },
+      exists: (path) => !!this.app.vault.getAbstractFileByPath(path),
+      open: async (path) => { await this.app.workspace.getLeaf('tab').openFile(this.file(path)); }
+    };
+    let session: VaultLiveSession;
+    const tools = new VaultLiveTools(port, () => !this.closed && session.active, (path, message) => {
+      if (!this.closed) this.saved.createEl('p', { text: `${message}: ${path}` });
+    }, (path) => this.addSource(path));
+    session = new VaultLiveSession(this.audio, {
+      state: (state, message) => this.setState(state, message),
+      transcript: (speaker, delta) => this.addTranscript(speaker, delta),
+      execute: (name, args) => tools.execute(name, args)
+    });
+    this.session = session; this.setState('connecting', 'Preparing vault conversation…');
+    try {
+      const key = await this.plugin.resolveVoiceApiKey();
+      if (this.closed || this.session !== session) return;
+      const context = JSON.stringify({ vault: this.app.vault.getName(), local_date: new Date().toLocaleDateString('en-CA'),
+        time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone, selected_folder: this.selection.folder,
+        selected_note: this.selection.note || this.app.workspace.getActiveFile()?.path || '', search_scope: 'Entire vault unless the user requests a folder' });
+      await session.start(key, this.plugin.settings.liveBackendModel, context);
+    } catch { session.dispose(); this.setState('error', 'Could not load the saved OpenAI key. Check File Focus voice settings.'); }
+  }
+  onClose(): void { this.closed = true; this.session?.end(); this.release(); }
+  shutdown(): void { this.session?.end(); this.session?.dispose(); this.close(); }
+  private setState(state: LiveState, message: string): void {
+    if (this.closed) return;
+    this.status.setText(message); this.status.dataset.state = state;
+    this.startButton.disabled = ['connecting', 'connected', 'ending'].includes(state);
+    this.muteButton.disabled = state !== 'connected'; this.endButton.disabled = !['connecting', 'connected'].includes(state);
+  }
+  private addSource(path: string): void {
+    if (this.closed || this.sourcePaths.has(path)) return;
+    this.sourcePaths.add(path);
+    const button = this.sources.createEl('button', { text: path.split('/').pop() || path, attr: { title: path, 'aria-label': `Open source ${path}` } });
+    button.addEventListener('click', () => { const file = this.app.vault.getAbstractFileByPath(path); if (file instanceof TFile) void this.app.workspace.getLeaf('tab').openFile(file); });
+  }
+  private addTranscript(speaker: string, delta: string): void {
+    if (this.closed) return;
+    if (!this.lastText || speaker !== this.lastSpeaker) {
+      const line = this.transcript.createEl('p'); line.createEl('strong', { text: `${speaker}: ` });
+      this.lastText = line.createSpan(); this.lastSpeaker = speaker;
+    }
+    this.lastText.appendText(delta);
+    while (this.transcript.children.length > 80) this.transcript.firstElementChild?.remove();
+    this.transcript.scrollTop = this.transcript.scrollHeight;
+  }
+}
