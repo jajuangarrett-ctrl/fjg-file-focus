@@ -71,3 +71,7 @@ Desktop and mobile layouts are supported. Update through BRAT on devices that do
 ## Broader live search
 
 Live search ranks individual keywords and common word forms instead of requiring an exact phrase. Search coverage is shown in the voice panel. Vault search scans the complete eligible folder/vault scope before paging results; hidden/protected files, unsupported content types, unreadable files and oversized notes are reported separately. Dashboard search covers all indexed objectives, including notes, updates and nested actions, with explicit status filters respected. Ranking is keyword-based, not semantic/vector search. Source matches remain ambiguous until the user identifies the intended note or objective.
+
+### Universal Dashboard toolbar (0.3.4)
+
+The layout-dashboard button opens the currently selected folder in **FJG Universal Dashboard**. Install and enable `jajuangarrett-ctrl/universal-use-dashboard`. Unconfigured folders open its visual enable/settings panel. Normal folder navigation and the existing live voice button retain their behavior. The dashboard also reuses File Focus's `openVaultVoice` API with the current dashboard folder and optional note as context.

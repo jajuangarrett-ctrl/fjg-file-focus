@@ -102,6 +102,15 @@ export function MainFolder(props: FolderProps) {
         commands.executeCommandById(AGENDA_CENTER_COMMAND_ID);
     };
 
+    const openUniversalDashboard = () => {
+        const dashboard = (app as any).plugins?.getPlugin?.('universal-use-dashboard');
+        if (!dashboard?.openDashboard) {
+            new Notice('Enable FJG Universal Dashboard to open the selected folder as a dashboard.');
+            return;
+        }
+        void dashboard.openDashboard(getSelectedFolder()).catch((error: Error) => new Notice(error.message));
+    };
+
     const reviewSelectedFolderTags = () => {
         const aiTaskTagger = (app as any).plugins?.getPlugin?.(AI_TASK_TAGGER_PLUGIN_ID);
 
@@ -283,6 +292,9 @@ export function MainFolder(props: FolderProps) {
                     aria-label="Talk to your vault" title="Talk to your vault with GPT-Live"
                     onClick={() => plugin.openVaultVoice({ folder: getSelectedFolder().path, note: activeOzFile?.path || '' })}>
                     <LuMic size={folderActionItemSize} aria-hidden="true" />
+                </button>
+                <button type="button" className="oz-nav-action-button" aria-label="Open selected folder dashboard" title="Open selected folder dashboard" onClick={openUniversalDashboard}>
+                    <Icons.LuLayoutDashboard size={folderActionItemSize - 2} />
                 </button>
                 <Icons.MdOutlineCreateNewFolder
                     className="oz-nav-action-button"

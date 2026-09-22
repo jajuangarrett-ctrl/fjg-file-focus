@@ -23,11 +23,11 @@ export class VaultVoiceModal extends Modal {
   private lastSpeaker = '';
   private lastText?: HTMLElement;
   private plugin: FileTreeAlternativePlugin;
-  private selection: { folder: string; note: string };
+  private voiceSelection: { folder: string; note: string };
   private release: () => void;
 
   constructor(app: App, plugin: FileTreeAlternativePlugin, selection: { folder: string; note: string }, release: () => void) {
-    super(app); this.plugin = plugin; this.selection = selection; this.release = release;
+    super(app); this.plugin = plugin; this.voiceSelection = selection; this.release = release;
   }
   onOpen(): void {
     this.titleEl.setText('Talk to your vault');
@@ -102,8 +102,8 @@ export class VaultVoiceModal extends Modal {
       const key = await this.plugin.resolveVoiceApiKey();
       if (this.closed || this.session !== session) return;
       const context = JSON.stringify({ vault: this.app.vault.getName(), local_date: new Date().toLocaleDateString('en-CA'),
-        time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone, selected_folder: this.selection.folder,
-        selected_note: this.selection.note || this.app.workspace.getActiveFile()?.path || '', search_scope: 'Entire vault unless the user requests a folder' });
+        time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone, selected_folder: this.voiceSelection.folder,
+        selected_note: this.voiceSelection.note || this.app.workspace.getActiveFile()?.path || '', search_scope: 'Entire vault unless the user requests a folder' });
       await session.start(key, this.plugin.settings.liveBackendModel, context);
     } catch { session.dispose(); this.setState('error', 'Could not load the saved OpenAI key. Check File Focus voice settings.'); }
   }
@@ -128,7 +128,7 @@ export class VaultVoiceModal extends Modal {
     const existing = this.app.workspace.getLeavesOfType('markdown').find((leaf) => leaf.getViewState().state?.file === path);
     const leaf = existing || this.app.workspace.getLeaf('tab');
     await leaf.openFile(file);
-    this.selection.note = path;
+    this.voiceSelection.note = path;
     if (file.parent) await this.plugin.revealFolderPath(file.parent.path);
     await this.app.workspace.revealLeaf(leaf);
     this.setCompact(true);

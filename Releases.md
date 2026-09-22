@@ -223,3 +223,9 @@ Validation: builds and automated checks passed; idle, connecting, ready, and err
 - Added Recent Notes and Bookmarks toolbar buttons to the folder toolbar.
 - Added sidebar-rendered Recent Notes and Bookmarks panels in place of the popup launcher pattern.
 - Added recent-note tracking for Markdown and Canvas files.
+
+## 0.3.4 — 2026-09-22
+
+Add the Universal Dashboard toolbar action for the selected folder. Uses the companion plugin's public opener and reports when the companion is unavailable. Existing live voice and normal navigation are preserved.
+
+Preserve the selected folder/note in voice sessions by using a context field distinct from Obsidian Modal’s internal selection snapshot. Live testing exposed this collision when opening the voice window from a dashboard.
