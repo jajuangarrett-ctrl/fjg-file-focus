@@ -21,6 +21,7 @@ interface FolderProps {
 const OMNISEARCH_COMMAND_ID = 'omnisearch:show-modal';
 const VAULT_CONTROL_CENTER_COMMAND_ID = 'vault-control-center:open-vault-control-center';
 const FJG_TASK_MANAGER_COMMAND_ID = 'fjg-task-manager:open-dashboard';
+const AGENDA_CENTER_COMMAND_ID = 'agenda-capture:open-agenda-center';
 const AI_TASK_TAGGER_PLUGIN_ID = 'ai-task-tagger';
 
 export function MainFolder(props: FolderProps) {
@@ -88,6 +89,17 @@ export function MainFolder(props: FolderProps) {
         }
 
         commands.executeCommandById(FJG_TASK_MANAGER_COMMAND_ID);
+    };
+
+    const openAgendaCenter = () => {
+        const commands = (app as any).commands;
+
+        if (!commands?.commands?.[AGENDA_CENTER_COMMAND_ID] || !commands?.executeCommandById) {
+            new Notice('Enable or update Agenda Capture to open the Agenda Center.');
+            return;
+        }
+
+        commands.executeCommandById(AGENDA_CENTER_COMMAND_ID);
     };
 
     const reviewSelectedFolderTags = () => {
@@ -259,6 +271,13 @@ export function MainFolder(props: FolderProps) {
                     size={folderActionItemSize}
                     onClick={openTaskManagerDashboard}
                     aria-label="Open FJG Task Manager Dashboard"
+                />
+                <Icons.MdEventNote
+                    className="oz-nav-action-button fjg-agenda-center-button"
+                    size={folderActionItemSize}
+                    onClick={openAgendaCenter}
+                    aria-label="Open Agenda Center"
+                    title="Open Agenda Center"
                 />
                 <button type="button" className="oz-nav-action-button fjg-vault-voice-button"
                     aria-label="Talk to your vault" title="Talk to your vault with GPT-Live"

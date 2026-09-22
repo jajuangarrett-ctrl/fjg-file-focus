@@ -19,7 +19,7 @@ import {
 } from 'react-icons/fa';
 import { AiFillFilePdf, AiFillFileImage, AiFillFileWord } from 'react-icons/ai';
 import { IoIosSearch, IoIosEye, IoIosEyeOff, IoIosAddCircle, IoIosCloseCircleOutline, IoIosArrowBack, IoMdArrowDropright } from 'react-icons/io';
-import { MdContentCopy, MdFormatListBulleted, MdLocationOn, MdOutlineCreateNewFolder, MdTitle } from 'react-icons/md';
+import { MdContentCopy, MdEventNote, MdFormatListBulleted, MdLocationOn, MdOutlineCreateNewFolder, MdTitle } from 'react-icons/md';
 import { CgChevronDoubleDown, CgChevronDoubleUp, CgSortAz } from 'react-icons/cg';
 import { LuListChecks } from 'react-icons/lu';
 
@@ -155,6 +155,7 @@ export {
     CgChevronDoubleUp,
     CgSortAz,
     MdOutlineCreateNewFolder,
+    MdEventNote,
     MdFormatListBulleted,
     MdContentCopy,
     MdLocationOn,
