@@ -5,7 +5,7 @@ import ConditionalRootFolderWrapper from 'components/FolderView/ConditionalWrapp
 import { useRecoilState } from 'recoil';
 import * as recoilState from 'recoil/pluginState';
 import { NestedFolders } from 'components/FolderView/NestedFolders';
-import { TFolder, Menu, Notice } from 'obsidian';
+import { TFolder, Menu, Notice, Platform } from 'obsidian';
 import { VaultChangeModal } from 'modals';
 import * as Icons from 'utils/icons';
 import { FolderSortType } from 'settings';
@@ -24,6 +24,31 @@ const FJG_TASK_MANAGER_COMMAND_ID = 'fjg-task-manager:open-dashboard';
 const AGENDA_CENTER_COMMAND_ID = 'agenda-capture:open-agenda-center';
 const AI_TASK_TAGGER_PLUGIN_ID = 'ai-task-tagger';
 
+interface ToolbarButtonProps {
+    label: string;
+    onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
+    children: React.ReactNode;
+    active?: boolean;
+    disabled?: boolean;
+    pressed?: boolean;
+    className?: string;
+}
+
+function ToolbarButton({ label, onClick, children, active = false, disabled = false, pressed, className = '' }: ToolbarButtonProps) {
+    return (
+        <button
+            type="button"
+            className={`oz-nav-action-button${active ? ' is-active' : ''}${className ? ` ${className}` : ''}`}
+            aria-label={label}
+            aria-pressed={pressed}
+            title={label}
+            disabled={disabled}
+            onClick={onClick}>
+            {children}
+        </button>
+    );
+}
+
 export function MainFolder(props: FolderProps) {
     const treeStyles = { color: 'var(--text-muted)', fill: '#c16ff7', width: '100%' };
     const plugin = props.plugin;
@@ -37,6 +62,16 @@ export function MainFolder(props: FolderProps) {
     const [focusedFolder, setFocusedFolder] = useRecoilState(recoilState.focusedFolder);
     const [_openFolders, setOpenFolders] = useRecoilState(recoilState.openFolders);
     const [activeOzFile] = useRecoilState(recoilState.activeOZFile);
+    const [followActiveFile, setFollowActiveFile] = React.useState(plugin.settings.followActiveFile);
+
+    React.useEffect(() => {
+        const handleFollowActiveFileChange = (event: Event) => {
+            setFollowActiveFile((event as CustomEvent<{ value: boolean }>).detail.value);
+        };
+
+        window.addEventListener(eventTypes.followActiveFileChange, handleFollowActiveFileChange);
+        return () => window.removeEventListener(eventTypes.followActiveFileChange, handleFollowActiveFileChange);
+    }, []);
 
     // Force Update
     const forceUpdate = useForceUpdate();
@@ -48,6 +83,10 @@ export function MainFolder(props: FolderProps) {
 
     const openFocusPanel = (panel: 'recent' | 'bookmarks') => {
         setView(panel);
+    };
+
+    const toggleFollowActiveFile = () => {
+        void plugin.setFollowActiveFile(!followActiveFile);
     };
 
     const createFolder = (underFolder: TFolder) => {
@@ -256,100 +295,70 @@ export function MainFolder(props: FolderProps) {
         if (!folder.isRoot()) focusOnFolder(folder.parent);
     };
 
-    let folderActionItemSize = 22;
-
     return (
         <div className="oz-folders-tree-wrapper">
             <div className="oz-folders-action-items file-tree-header-fixed">
-                <Icons.FaHome
-                    className="oz-nav-action-button"
-                    size={folderActionItemSize - 2}
-                    onClick={() => void openVaultControlCenter()}
-                    aria-label="Open Vault Control Center"
-                />
-                <Icons.SunriseIcon
-                    className="oz-nav-action-button"
-                    size={folderActionItemSize - 2}
+                <ToolbarButton label="Open Vault Control Center" onClick={() => void openVaultControlCenter()}>
+                    <Icons.FaHome />
+                </ToolbarButton>
+                <ToolbarButton
+                    label="Open Inbox Morning Brief"
                     onClick={(): void => {
                         void plugin.openInboxMorningBrief();
-                    }}
-                    aria-label="Open Inbox Morning Brief"
-                />
-                <Icons.LuListChecks
-                    className="oz-nav-action-button"
-                    size={folderActionItemSize}
-                    onClick={openTaskManagerDashboard}
-                    aria-label="Open FJG Task Manager Dashboard"
-                />
-                <Icons.MdEventNote
-                    className="oz-nav-action-button fjg-agenda-center-button"
-                    size={folderActionItemSize}
-                    onClick={openAgendaCenter}
-                    aria-label="Open Agenda Center"
-                    title="Open Agenda Center"
-                />
-                <button type="button" className="oz-nav-action-button fjg-vault-voice-button"
-                    aria-label="Talk to your vault" title="Talk to your vault with GPT-Live"
+                    }}>
+                    <Icons.SunriseIcon />
+                </ToolbarButton>
+                <ToolbarButton label="Open FJG Task Manager Dashboard" onClick={openTaskManagerDashboard}>
+                    <Icons.LuListChecks />
+                </ToolbarButton>
+                <ToolbarButton label="Open Agenda Center" onClick={openAgendaCenter} className="fjg-agenda-center-button">
+                    <Icons.MdEventNote />
+                </ToolbarButton>
+                <ToolbarButton
+                    label="Talk to your vault with GPT-Live"
+                    className="fjg-vault-voice-button"
                     onClick={() => plugin.openVaultVoice({ folder: getSelectedFolder().path, note: activeOzFile?.path || '' })}>
-                    <LuMic size={folderActionItemSize} aria-hidden="true" />
-                </button>
-                <button type="button" className="oz-nav-action-button" aria-label="Open selected folder dashboard" title="Open selected folder dashboard" onClick={openUniversalDashboard}>
-                    <Icons.LuLayoutDashboard size={folderActionItemSize - 2} />
-                </button>
-                <Icons.MdOutlineCreateNewFolder
-                    className="oz-nav-action-button"
-                    size={folderActionItemSize}
-                    onClick={() => createFolderInCurrentFolder()}
-                    aria-label="Create Folder in Current Folder"
-                />
-                <Icons.FaTags
-                    className="oz-nav-action-button"
-                    size={folderActionItemSize - 2}
-                    onClick={reviewSelectedFolderTags}
-                    aria-label="Review Selected Folder Tags with AI"
-                />
-                <Icons.IoIosSearch
-                    className="oz-nav-action-button"
-                    size={folderActionItemSize}
-                    onClick={openOmnisearch}
-                    aria-label="Open Omnisearch"
-                />
-                <Icons.CgSortAz
-                    className="oz-nav-action-button"
-                    size={folderActionItemSize}
-                    onClick={triggerFolderSortOptions}
-                    aria-label="Sorting Options"
-                />
-                <Icons.FaHistory
-                    className={`oz-nav-action-button${view === 'recent' ? ' is-active' : ''}`}
-                    size={folderActionItemSize - 2}
-                    onClick={() => openFocusPanel('recent')}
-                    aria-label="Recent Notes"
-                />
-                <Icons.FaRegBookmark
-                    className={`oz-nav-action-button${view === 'bookmarks' ? ' is-active' : ''}`}
-                    size={folderActionItemSize - 2}
-                    onClick={() => openFocusPanel('bookmarks')}
-                    aria-label="Bookmarks"
-                />
-                <Icons.BiCopy
-                    className="oz-nav-action-button"
-                    size={folderActionItemSize - 2}
-                    onClick={() => void copySelectedVaultFolderPath()}
-                    aria-label="Copy Selected Note Folder Path"
-                />
-                <Icons.CgChevronDoubleUp
-                    className="oz-nav-action-button"
-                    size={folderActionItemSize}
-                    onClick={collapseAllFolders}
-                    aria-label="Collapse Folders"
-                />
-                <Icons.CgChevronDoubleDown
-                    className="oz-nav-action-button"
-                    size={folderActionItemSize}
-                    onClick={explandAllFolders}
-                    aria-label="Expand Folders"
-                />
+                    <LuMic aria-hidden="true" />
+                </ToolbarButton>
+                <ToolbarButton label="Open selected folder dashboard" onClick={openUniversalDashboard}>
+                    <Icons.LuLayoutDashboard />
+                </ToolbarButton>
+                <ToolbarButton label="Create Folder in Current Folder" onClick={() => createFolderInCurrentFolder()}>
+                    <Icons.MdOutlineCreateNewFolder />
+                </ToolbarButton>
+                <ToolbarButton label="Review Selected Folder Tags with AI" onClick={reviewSelectedFolderTags}>
+                    <Icons.FaTags />
+                </ToolbarButton>
+                <ToolbarButton label="Open Omnisearch" onClick={openOmnisearch}>
+                    <Icons.IoIosSearch />
+                </ToolbarButton>
+                <ToolbarButton
+                    label={Platform.isMobile ? 'Follow active note is available on desktop' : `Follow active note: ${followActiveFile ? 'on' : 'off'}`}
+                    onClick={toggleFollowActiveFile}
+                    active={followActiveFile}
+                    pressed={followActiveFile}
+                    disabled={Platform.isMobile}
+                    className="fjg-follow-active-note-button">
+                    <Icons.BiCurrentLocation />
+                </ToolbarButton>
+                <ToolbarButton label="Sorting Options" onClick={triggerFolderSortOptions}>
+                    <Icons.CgSortAz />
+                </ToolbarButton>
+                <ToolbarButton label="Recent Notes" onClick={() => openFocusPanel('recent')} active={view === 'recent'}>
+                    <Icons.FaHistory />
+                </ToolbarButton>
+                <ToolbarButton label="Bookmarks" onClick={() => openFocusPanel('bookmarks')} active={view === 'bookmarks'}>
+                    <Icons.FaRegBookmark />
+                </ToolbarButton>
+                <ToolbarButton label="Copy Selected Note Folder Path" onClick={() => void copySelectedVaultFolderPath()}>
+                    <Icons.BiCopy />
+                </ToolbarButton>
+                <ToolbarButton label="Collapse Folders" onClick={collapseAllFolders}>
+                    <Icons.CgChevronDoubleUp />
+                </ToolbarButton>
+                <ToolbarButton label="Expand Folders" onClick={explandAllFolders}>
+                    <Icons.CgChevronDoubleDown />
+                </ToolbarButton>
             </div>
             <ConditionalRootFolderWrapper
                 condition={(focusedFolder && !focusedFolder.isRoot()) || (focusedFolder && focusedFolder.isRoot && plugin.settings.showRootFolder)}

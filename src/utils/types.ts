@@ -103,6 +103,7 @@ export class CustomVaultChangeBatchEvent extends Event {
 
 export const eventTypes = {
     activeFileChange: 'fta-active-file-change',
+    followActiveFileChange: 'fjg-file-focus-follow-active-file-change',
     refreshView: 'fta-refresh-view',
     revealFile: 'fta-reveal-file',
     revealFolder: 'fta-reveal-folder',

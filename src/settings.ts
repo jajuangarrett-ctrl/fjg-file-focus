@@ -215,12 +215,8 @@ export class FileTreeAlternativePluginSettingsTab extends PluginSettingTab {
             .setName('Follow active note')
             .setDesc('Automatically show and select the open note on desktop. Mobile following remains disabled for stability.')
             .addToggle((toggle) =>
-                toggle.setValue(this.plugin.settings.followActiveFile).onChange((value) => {
-                    this.plugin.settings.followActiveFile = value;
-                    this.plugin.saveSettings();
-                    if (value && this.plugin.shouldFollowActiveFile()) {
-                        this.plugin.dispatchActiveFileChange(this.plugin.app.workspace.getActiveFile());
-                    }
+                toggle.setValue(this.plugin.settings.followActiveFile).onChange(async (value) => {
+                    await this.plugin.setFollowActiveFile(value);
                 })
             );
 

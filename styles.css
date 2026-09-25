@@ -288,8 +288,63 @@ div.workspace-leaf-content[data-type='fjg-file-focus-view'] > div.view-content {
 }
 
 .oz-folders-action-items {
+    --fjg-file-focus-toolbar-control-size: 30px;
+    --fjg-file-focus-toolbar-icon-size: 21px;
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    justify-content: center;
+    padding: 3px 4px;
     text-align: center;
-    padding: 3px 2px 0px 2px;
+}
+
+.oz-folders-action-items > button.oz-nav-action-button {
+    align-items: center;
+    appearance: none;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    box-sizing: border-box;
+    color: var(--oz-fta-header-icon-colors);
+    cursor: pointer;
+    display: inline-flex;
+    flex: 0 0 var(--fjg-file-focus-toolbar-control-size);
+    height: var(--fjg-file-focus-toolbar-control-size);
+    justify-content: center;
+    line-height: 1;
+    margin: 0;
+    min-height: var(--fjg-file-focus-toolbar-control-size);
+    padding: 4px;
+    width: var(--fjg-file-focus-toolbar-control-size);
+}
+
+.oz-folders-action-items > button.oz-nav-action-button > svg {
+    display: block;
+    flex: 0 0 var(--fjg-file-focus-toolbar-icon-size);
+    height: var(--fjg-file-focus-toolbar-icon-size);
+    transform: none;
+    width: var(--fjg-file-focus-toolbar-icon-size);
+}
+
+.oz-folders-action-items > button.oz-nav-action-button:hover {
+    background: var(--background-modifier-hover);
+    opacity: 1;
+}
+
+.oz-folders-action-items > button.oz-nav-action-button.is-active {
+    background: rgba(var(--oz-fta-header-icon-colors-accent-rgb), 0.14);
+    color: var(--interactive-accent);
+}
+
+.oz-folders-action-items > button.oz-nav-action-button:focus-visible {
+    outline: 2px solid var(--interactive-accent);
+    outline-offset: 1px;
+}
+
+.oz-folders-action-items > button.oz-nav-action-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.35;
 }
 
 .oz-folders-action-items,
@@ -885,8 +940,6 @@ svg.oz-folder-toggle path {
     font-weight: 600;
     margin-bottom: 4px;
 }
-.oz-folders-action-items .fjg-vault-voice-button { appearance: none; border: 0; box-shadow: none; background: transparent; padding: 0 0 0 2px; margin-left: 5px; min-height: 24px; height: 24px; width: 24px; vertical-align: middle; cursor: pointer; }
-.fjg-vault-voice-button:focus-visible { outline: 2px solid var(--interactive-accent); outline-offset: 2px; }
 .fjg-vault-live-modal { width: min(650px, 94vw); }
 .fjg-vault-live-caption { color: var(--text-muted); font-size: var(--font-smallest); }
 .fjg-vault-live-status { padding: 12px; border-radius: 8px; background: var(--background-secondary); }
@@ -916,7 +969,7 @@ svg.oz-folder-toggle path {
 .fjg-vault-search-path { color: var(--text-muted); font-size: var(--font-smallest); overflow-wrap: anywhere; }
 .fjg-vault-search-excerpt { font-size: var(--font-small); overflow-wrap: anywhere; }
 @media (max-width: 600px) {
-  .oz-folders-action-items .fjg-vault-voice-button { width: 44px; min-height: 44px; height: 44px; }
+  .oz-folders-action-items { --fjg-file-focus-toolbar-control-size: 34px; --fjg-file-focus-toolbar-icon-size: 23px; }
   .fjg-vault-live-modal { width: 100%; max-height: 90dvh; padding-bottom: max(16px, env(safe-area-inset-bottom)); }
   .fjg-vault-live-controls button { min-height: 44px; flex: 1 1 140px; }
   .fjg-vault-live-sources button { min-height: 44px; }

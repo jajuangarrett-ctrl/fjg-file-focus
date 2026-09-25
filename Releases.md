@@ -1,3 +1,11 @@
+## 0.3.5 — Active-note toolbar toggle
+
+- Added a target button to the folder toolbar that turns **Follow active note** on or off and saves the same setting used by the Settings tab.
+- Kept the toolbar and Settings toggle synchronized across open File Focus views.
+- Highlighted the toolbar button while following is on and immediately revealed the current note when following is enabled.
+- Standardized every folder-toolbar action as an equal-size button with consistent icon dimensions, hover, focus, and active states.
+- Preserved the existing mobile stability safeguard by disabling the follow control on mobile.
+
 ## 0.3.2 — Audio readiness
 
 Readiness now waits for a live, unmuted microphone, connected WebRTC transport and outgoing audio packet flow. Mobile sessions then allow a conservative 3.5-second warm-up before showing Ready. This mitigates the reported missing opening phrase; packet flow does not prove server recognition, and physical phone confirmation remains pending. End during warm-up closes the started session and cancels readiness.

@@ -233,6 +233,16 @@ export default class FileTreeAlternativePlugin extends Plugin {
         await this.saveData(this.settings);
     }
 
+    async setFollowActiveFile(value: boolean) {
+        this.settings.followActiveFile = value;
+        window.dispatchEvent(new CustomEvent(eventTypes.followActiveFileChange, { detail: { value } }));
+        await this.saveSettings();
+
+        if (value && this.shouldFollowActiveFile()) {
+            this.dispatchActiveFileChange(this.app.workspace.getActiveFile());
+        }
+    }
+
     openVaultVoice(selection = { folder: '', note: '' }): void {
         if (this.vaultVoiceModal) return;
         this.vaultVoiceModal = new VaultVoiceModal(this.app, this, selection, () => { this.vaultVoiceModal = null; });

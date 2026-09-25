@@ -9,9 +9,11 @@ FJG File Focus is an Obsidian sidebar plugin for Franklin Garrett's vault workfl
 - A dedicated folder-tree ribbon icon that opens and reveals the File Focus sidebar.
 - A checklist button between Home and New Folder that opens the native FJG Task Manager dashboard.
 - Automatic desktop active-note following that opens the note's parent folder, selects the note, and expands its folder path.
+- A highlighted target button in the folder toolbar toggles active-note following without opening Settings.
 - **Open on Start** opens and shows the File Focus sidebar on desktop and mobile; mobile still does not follow file-open events automatically.
 - An optional **Mobile performance mode** keeps the React view and its listeners unmounted until the File Focus sidebar is visible, builds deeper folder branches only as they are expanded, and groups repeated live refreshes.
 - Toolbar buttons for Recent Notes and Bookmarks in the folder toolbar.
+- Uniform toolbar button and icon sizing across every folder-toolbar action.
 - Mobile-toolbar command and file-pane button for copying page text—without YAML properties—to the clipboard.
 - A separate file-pane button continues to copy the selected note's vault-relative file path.
 - Recent notes and bookmarks render inside the sidebar file-list area instead of opening a popup modal.
