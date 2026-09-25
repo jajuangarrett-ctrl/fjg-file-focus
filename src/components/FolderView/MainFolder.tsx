@@ -10,7 +10,7 @@ import { VaultChangeModal } from 'modals';
 import * as Icons from 'utils/icons';
 import { FolderSortType } from 'settings';
 import useForceUpdate from 'hooks/ForceUpdate';
-import { FolderTree } from 'utils/types';
+import { FolderTree, eventTypes } from 'utils/types';
 import * as FileTreeUtils from 'utils/Utils';
 import { LuMic } from 'react-icons/lu';
 
