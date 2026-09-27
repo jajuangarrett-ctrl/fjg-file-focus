@@ -367,7 +367,7 @@ export class FileTreeAlternativePluginSettingsTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName('Only show supported document file types')
-            .setDesc('When enabled, the file pane only shows Markdown plus supported document, spreadsheet, web, ebook, and Excalidraw files.')
+            .setDesc('When enabled, the file pane only shows Markdown and Bases dashboards plus supported document, spreadsheet, web, ebook, and Excalidraw files.')
             .addToggle((toggle) =>
                 toggle.setValue(this.plugin.settings.showOnlySupportedFileTypes).onChange((value) => {
                     this.plugin.settings.showOnlySupportedFileTypes = value;

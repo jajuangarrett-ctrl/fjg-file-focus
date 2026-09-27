@@ -1,3 +1,7 @@
+## 0.3.6
+
+- Show Obsidian .base files, including Universal Dashboard launchers, when supported-file filtering is enabled.
+
 ## 0.3.5 — Active-note toolbar toggle
 
 - Added a target button to the folder toolbar that turns **Follow active note** on or off and saves the same setting used by the Settings tab.

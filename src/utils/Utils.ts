@@ -6,6 +6,7 @@ import { VaultChangeModal } from 'modals';
 declare const app: App;
 
 const SUPPORTED_FILE_EXTENSIONS = new Set([
+    'base', // Obsidian Bases, including Universal Dashboard launchers.
     'pdf',
     'doc',
     'docx',
