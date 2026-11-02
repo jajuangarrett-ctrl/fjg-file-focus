@@ -22,6 +22,7 @@ const OMNISEARCH_COMMAND_ID = 'omnisearch:show-modal';
 const VAULT_CONTROL_CENTER_COMMAND_ID = 'vault-control-center:open-vault-control-center';
 const FJG_TASK_MANAGER_COMMAND_ID = 'fjg-task-manager:open-dashboard';
 const AGENDA_CENTER_COMMAND_ID = 'agenda-capture:open-agenda-center';
+const FOLDER_NAVIGATOR_COMMAND_ID = 'fjg-note-navigator-toolbar:open-folder-navigator';
 const AI_TASK_TAGGER_PLUGIN_ID = 'ai-task-tagger';
 
 interface ToolbarButtonProps {
@@ -139,6 +140,17 @@ export function MainFolder(props: FolderProps) {
         }
 
         commands.executeCommandById(AGENDA_CENTER_COMMAND_ID);
+    };
+
+    const openFolderNavigator = () => {
+        const commands = (app as any).commands;
+
+        if (!commands?.commands?.[FOLDER_NAVIGATOR_COMMAND_ID] || !commands?.executeCommandById) {
+            new Notice('Enable or update FJG Note Navigator Toolbar to open Folder Navigator.');
+            return;
+        }
+
+        commands.executeCommandById(FOLDER_NAVIGATOR_COMMAND_ID);
     };
 
     const openUniversalDashboard = () => {
@@ -328,6 +340,9 @@ export function MainFolder(props: FolderProps) {
                 </ToolbarButton>
                 <ToolbarButton label="Review Selected Folder Tags with AI" onClick={reviewSelectedFolderTags}>
                     <Icons.FaTags />
+                </ToolbarButton>
+                <ToolbarButton label="Open Folder Navigator" onClick={openFolderNavigator} className="fjg-folder-navigator-button">
+                    <Icons.FaFolderOpen />
                 </ToolbarButton>
                 <ToolbarButton label="Open Omnisearch" onClick={openOmnisearch}>
                     <Icons.IoIosSearch />

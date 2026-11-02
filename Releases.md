@@ -1,3 +1,9 @@
+## 0.3.7 — Folder Navigator toolbar button
+
+- Add an Open Folder Navigator button to the folder toolbar, using FJG Note Navigator Toolbar.
+- Show an actionable notice when the companion plugin or command is unavailable.
+- Restore the source for the previously installed local 0.3.7 build.
+
 ## 0.3.6
 
 - Show Obsidian .base files, including Universal Dashboard launchers, when supported-file filtering is enabled.
