@@ -17,6 +17,8 @@ export interface FileTreeAlternativePluginSettings {
     liveBackendModel: string;
     openViewOnStart: boolean;
     mobilePerformanceMode: boolean;
+    mobileOptimizedLayout: boolean;
+    mobileToolbarShortcut: 'recent' | 'folder-navigator';
     ribbonIcon: boolean;
     followActiveFile: boolean;
     showRootFolder: boolean;
@@ -57,6 +59,8 @@ export const DEFAULT_SETTINGS: FileTreeAlternativePluginSettings = {
     liveBackendModel: 'gpt-5.6-terra',
     openViewOnStart: true,
     mobilePerformanceMode: DEFAULT_MOBILE_PERFORMANCE_MODE,
+    mobileOptimizedLayout: false,
+    mobileToolbarShortcut: 'recent',
     ribbonIcon: true,
     followActiveFile: true,
     showRootFolder: true,
@@ -108,6 +112,12 @@ export class FileTreeAlternativePluginSettingsTab extends PluginSettingTab {
     display(): void {
         let { containerEl } = this;
         containerEl.empty();
+        new Setting(containerEl).setName('Optimize layout on mobile').setDesc('Optional touch layout for phones and tablets only. Keeps your shortcuts and filters, uses a compact toolbar with More actions, and shows folders first at the vault root. Desktop stays unchanged.').addToggle(toggle => toggle.setValue(this.plugin.settings.mobileOptimizedLayout).onChange(async value => {
+            this.plugin.settings.mobileOptimizedLayout=value; await this.plugin.saveSettings(); this.refreshView();
+        }));
+        new Setting(containerEl).setName('Mobile toolbar shortcut').setDesc('Choose the quick-access button beside New note. Both actions remain in More actions. Used only with mobile optimization.').addDropdown(dropdown => dropdown.addOption('recent','Recent notes').addOption('folder-navigator','Folder Navigator').setValue(this.plugin.settings.mobileToolbarShortcut).onChange(async (value:'recent'|'folder-navigator')=>{
+            this.plugin.settings.mobileToolbarShortcut=value; await this.plugin.saveSettings(); this.refreshView();
+        }));
         new Setting(containerEl).setName('Vault voice API key').setDesc('Optional. Leave empty to reuse the OpenAI key already saved by FJG Objective Manager on this device.')
             .addText((text) => { text.inputEl.type = 'password'; text.setValue(this.plugin.settings.liveApiKey).onChange(async (value) => {
                 this.plugin.settings.liveApiKey = value.trim(); await this.plugin.saveSettings();

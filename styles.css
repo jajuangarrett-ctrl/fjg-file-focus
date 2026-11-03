@@ -980,3 +980,60 @@ svg.oz-folder-toggle path {
 .fjg-vault-live-status { font-weight: 600; border: 2px solid var(--background-modifier-border); }
 .fjg-vault-live-status[data-state="connecting"] { border-color: var(--text-warning); }
 .fjg-vault-live-status[data-state="connected"] { border-color: var(--color-green); }
+
+/* Optional mobile optimization. Desktop and toggle-off views do not use these classes. */
+/* Duo navigator. Obsidian already reserves its footer and safe area in contentEl.
+   Reclaim only horizontal padding; never subtract an estimated extra 72px. */
+.workspace-leaf-content .view-content.ffm-host { padding-inline: 0; overflow: hidden; }
+.ffm-host .file-tree-plugin-view { height:100%; min-height:0; }
+.ffm-host .ffm-navigator { height:100%; width:100%; min-height:0; overflow:hidden; }
+.ffm-navigator, .ffm-navigator * { box-sizing:border-box; }
+.ffm-navigator .ffm-pane { overflow:auto; min-height:0; overscroll-behavior:contain; }
+.ffm-navigator .ffm-main-scroll { height:100%; position:relative; }
+.ffm-navigator .ffm-toolbar { display:flex; flex-wrap:nowrap; gap:0; height:44px; min-height:44px; width:100%; overflow-x:auto; overflow-y:hidden; background:var(--background-primary); z-index:5; padding:0; }
+.ffm-navigator .ffm-toolbar-fixed { position:sticky; top:0; }
+.ffm-navigator .ffm-toolbar button { display:flex; align-items:center; justify-content:center; flex:0 0 44px; min-width:44px; height:44px; min-height:44px; margin:0; padding:0; border:0; box-shadow:none; border-radius:4px; background:transparent; color:var(--text-normal); }
+.ffm-navigator .ffm-toolbar button.ffm-back { flex:1 0 44px; min-width:44px; gap:4px; overflow:hidden; }
+.ffm-navigator .ffm-back svg { flex:0 0 18px; }
+.ffm-navigator .ffm-back span { text-overflow:ellipsis; white-space:nowrap; overflow:hidden; }
+.ffm-navigator .ffm-toolbar svg { width:20px; height:20px; }
+.ffm-navigator .ffm-toolbar button:hover, .ffm-navigator button[aria-pressed=true] { background:var(--background-modifier-hover); }
+.ffm-navigator button:focus-visible,.ffm-navigator [tabindex]:focus-visible { outline:2px solid var(--interactive-accent); outline-offset:-2px; }
+.ffm-navigator .ffm-columns[hidden] { display:none; }
+.ffm-navigator .oz-folders-tree-wrapper { height:auto; min-height:0; overflow:visible; width:100%; }
+.ffm-navigator .ffm-file-column { position:relative; min-width:0; }
+.ffm-navigator .ffm-file-content { width:100%; min-height:44px; }
+.ffm-navigator .ffm-virtual-files { position:relative; width:100%; }
+.ffm-navigator .oz-nav-file { height:44px; min-height:44px; margin:0; padding:0; display:flex; align-items:center; cursor:pointer; }
+.ffm-navigator .oz-nav-file-title { width:100%; min-width:0; height:44px; margin:0; padding:0 8px; display:flex; align-items:center; }
+.ffm-navigator .oz-nav-file-title-content { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+.ffm-navigator .oz-folder-line { display:flex; align-items:center; height:44px; min-height:44px; margin:0; padding:0; }
+.ffm-navigator .oz-folder-element { margin:0; padding:0; }
+.ffm-navigator .oz-icon-div { flex:0 0 44px; width:44px; height:44px; }
+.ffm-navigator .oz-folder-toggle { width:44px; height:44px; padding:12px; cursor:pointer; }
+.ffm-navigator .oz-folder-block { display:flex; align-items:center; flex:1; min-width:44px; min-height:44px; padding-right:8px; }
+.ffm-navigator .oz-folder-name { min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.ffm-navigator .oz-folder-contents { margin-left:12px; border-left:none; }
+.ffm-navigator .ffm-search { height:44px; padding:2px 4px; }
+.ffm-navigator input[type=search] { width:100%; min-height:40px; }
+.ffm-navigator .ffm-empty { padding:12px; color:var(--text-muted); }
+.ffm-navigator .oz-nav-file,.ffm-navigator .oz-folder-block,.ffm-navigator .ffm-back { -webkit-touch-callout:none; user-select:none; }
+.ffm-navigator.ffm-wide .ffm-columns { display:grid; grid-template-columns:var(--ffm-folder-ratio) 44px minmax(0,1fr); height:calc(100% - 44px); min-height:0; }
+.ffm-navigator.ffm-wide .ffm-folder-column { overflow:auto; min-width:0; overscroll-behavior:contain; }
+.ffm-navigator .ffm-divider { touch-action:none; cursor:col-resize; background:linear-gradient(90deg,transparent 21px,var(--background-modifier-border) 21px,var(--background-modifier-border) 23px,transparent 23px); }
+.ffm-navigator .fjg-focus-panel { height:auto; min-height:0; display:block; }
+.ffm-navigator .fjg-focus-panel__header { position:static; padding:0; border:0; }
+.ffm-navigator .fjg-focus-panel__header .oz-file-tree-header { display:none; }
+.ffm-navigator .fjg-focus-panel__row,.ffm-navigator .fjg-focus-panel__context-row { min-height:44px; width:100%; margin:0; }
+.ffm-navigator .fjg-focus-panel__body { overflow:visible; }
+
+.ffm-navigator.ffm-wide.ffm-unpinned .ffm-columns { height:100%; }
+
+.ffm-modal button,.ffm-modal input,.oz-vault-live-controls button { min-height:44px; min-width:44px; }
+
+.ffm-navigator .ffm-toolbar button.ffm-back { justify-content:flex-start; padding-inline:6px; }
+.ffm-navigator .oz-folder-toggle { color:var(--text-muted); }
+
+.ffm-navigator .ffm-file-column[hidden] { display:none; }
+.ffm-navigator.ffm-root-folders-only .ffm-columns { display:block; }
+.ffm-navigator.ffm-root-folders-only .ffm-folder-column { height:100%; }

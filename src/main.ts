@@ -169,6 +169,10 @@ export default class FileTreeAlternativePlugin extends Plugin {
 
         this.registerEvent(this.app.workspace.on('file-open', this.onFileOpen));
 
+        this.addCommand({id:'open-file-focus-tab',name:'Open File Focus as a tab',callback:async()=>{
+            const leaf=this.app.workspace.getLeaf('tab');await leaf.setViewState({type:this.VIEW_TYPE,active:true});this.app.workspace.revealLeaf(leaf);
+        }});
+
         // Add Command to Reveal Active File
         this.addCommand({
             id: 'reveal-active-file',

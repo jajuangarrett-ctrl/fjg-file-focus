@@ -1,3 +1,7 @@
+import { MobileNavigator } from 'components/Mobile/MobileNavigator';
+import { useMobileOptimization } from 'components/Mobile/policy';
+import * as MobileUtils from 'components/Mobile/utils';
+import { Platform } from 'obsidian';
 import { TAbstractFile, TFile, TFolder, Notice } from 'obsidian';
 import React, { useEffect, useRef } from 'react';
 import { FileComponent } from 'components/FileView/FileComponent';
@@ -20,8 +24,18 @@ interface MainTreeComponentProps {
 export default function MainTreeComponent(props: MainTreeComponentProps) {
     // --> Main Variables
     const { plugin } = props;
+    const mobileOptimized = useMobileOptimization(Platform.isMobile,plugin.settings.mobileOptimizedLayout);
     const revealHighlightTimeout = useRef<number | null>(null);
     const revealScrollTimeout = useRef<number | null>(null);
+
+    useEffect(() => {
+        const host = props.fileTreeView.contentEl;
+        if(!host)return;
+        const hadMobileClass=host.classList.contains('ffm-host');
+        host.classList.toggle('ffm-host',mobileOptimized);
+        if(mobileOptimized)host.style.paddingInline='0';
+        else if(hadMobileClass)host.style.removeProperty('padding-inline');
+    },[mobileOptimized]);
 
     // --> Force Update Hook
     const forceUpdate = useForceUpdate();
@@ -47,7 +61,7 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
     const setNewFileList = (folderPath?: string) => {
         let filesPath = folderPath ? folderPath : activeFolderPath;
         setOzFileList(
-            FileTreeUtils.getFilesUnderPath({
+            (mobileOptimized ? MobileUtils.getFilesUnderPath : FileTreeUtils.getFilesUnderPath)({
                 path: filesPath,
                 plugin: plugin,
                 excludedExtensions: excludedExtensions,
@@ -108,7 +122,7 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
             currentActiveFolderPath = activeFolderPath;
             return activeFolderPath;
         });
-        FileTreeUtils.createNewFile(null, currentActiveFolderPath, plugin);
+        (useMobileOptimization(Platform.isMobile,plugin.settings.mobileOptimizedLayout) ? MobileUtils.createNewFile : FileTreeUtils.createNewFile)(null, currentActiveFolderPath, plugin);
     };
 
     const handleOpenFocusPanelEvent = (evt: Event) => {
@@ -446,6 +460,7 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
 
     // Scrolling Functions
     function scrollToFile(fileToScroll: OZFile) {
+        if (useMobileOptimization(Platform.isMobile,plugin.settings.mobileOptimizedLayout)) { window.dispatchEvent(new CustomEvent('ffm-reveal-file-row',{detail:fileToScroll.path})); return; }
         const selector = `div.oz-file-tree-files div.oz-nav-file-title[data-path="${fileToScroll.path}"]`;
         const fileTitleElement = document.querySelector(selector);
         if (fileTitleElement) fileTitleElement.scrollIntoView(false);
@@ -460,6 +475,7 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
             ) as HTMLElement | undefined;
 
         const centerFolderElement = (folderElement: HTMLElement) => {
+            if (folderElement.closest('.ffm-compact')) return;
             folderElement.scrollIntoView({ block: 'center', inline: 'nearest' });
             [folderElement.closest('.oz-folders-tree-wrapper'), folderElement.closest('.oz-folder-pane, .oz-folder-pane-horizontal')]
                 .filter((element): element is HTMLElement => element instanceof HTMLElement)
@@ -553,6 +569,7 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
 
         // Get parent folder
         const parentFolder = fileToReveal.parent;
+        if (useMobileOptimization(Platform.isMobile,plugin.settings.mobileOptimizedLayout) && parentFolder?.isRoot()) window.requestAnimationFrame(()=>window.dispatchEvent(new Event('ffm-show-root-files')));
 
         // Keep the complete folder path available so the active note's location is visible.
         setFocusedFolder((currentFolder) => (currentFolder?.isRoot() ? currentFolder : plugin.app.vault.getRoot()));
@@ -574,6 +591,8 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
             scrollToFolder(parentFolder);
         }
     }
+
+    if (mobileOptimized) return <MobileNavigator plugin={plugin}/>;
 
     return (
         <React.Fragment>
