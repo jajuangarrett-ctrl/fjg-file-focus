@@ -1,0 +1,30 @@
+
+> fjg-file-focus@0.3.8 test
+> node --no-warnings=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test tests/*.test.ts
+
+✔ mobile performance mode defaults to the existing eager behavior when disabled (1.032791ms)
+✔ mobile performance mode mounts the reduced tree when open on start is enabled (0.184833ms)
+✔ mobile performance mode still defers hidden startup work when open on start is disabled (0.148708ms)
+✔ deferred mobile view activates only after it is connected and visible (0.190792ms)
+✔ desktop behavior is unchanged even when the mobile toggle is enabled (0.133208ms)
+✔ open on start controls both startup attachment and startup reveal (0.11625ms)
+✔ refresh queue groups a burst and coalesces duplicate keys (1.860417ms)
+✔ clearing the refresh queue releases pending work without flushing (0.12825ms)
+✔ removes standard YAML frontmatter and the separating blank line (0.970416ms)
+✔ supports BOM, CRLF, and the YAML document-end delimiter (0.187875ms)
+✔ copies notes without frontmatter unchanged (0.095ms)
+✔ returns an empty string when the note contains only frontmatter (0.056209ms)
+✔ vault search covers folders, returns exact source paths and excludes hidden configuration and credentials (15.606084ms)
+✔ search covers files beyond the old scan limit while note reading remains paged (69.813792ms)
+✔ exact edits preserve frontmatter, wiki links and literal replacement characters (0.875ms)
+✔ stale revisions, concurrent edits and stopped sessions never overwrite a note (0.529041ms)
+✔ creation, append and safe path boundaries prevent overwrite, duplicates and traversal (0.493083ms)
+✔ ranked search scans beyond early matches, respects deep scope and reports exclusions (149.917209ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 358.118917
