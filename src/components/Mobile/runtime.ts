@@ -12,7 +12,7 @@ export async function trashWithFallback(app: App, file: TAbstractFile, system: b
 }
 export class MobilePreview extends Modal {
     private renderer = new Component();
-    constructor(app:App, private file:TFile){super(app);this.modalEl.classList.add('oz-modal');}
+    constructor(app:App, private file:TFile){super(app);this.modalEl.classList.add('ffm-modal');}
     async onOpen(){
         this.renderer.load();
         this.titleEl.setText(this.file.basename);

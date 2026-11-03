@@ -61,7 +61,7 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
     const setNewFileList = (folderPath?: string) => {
         let filesPath = folderPath ? folderPath : activeFolderPath;
         setOzFileList(
-            (mobileOptimized ? MobileUtils.getFilesUnderPath : FileTreeUtils.getFilesUnderPath)({
+            (useMobileOptimization(Platform.isMobile,plugin.settings.mobileOptimizedLayout) ? MobileUtils.getFilesUnderPath : FileTreeUtils.getFilesUnderPath)({
                 path: filesPath,
                 plugin: plugin,
                 excludedExtensions: excludedExtensions,

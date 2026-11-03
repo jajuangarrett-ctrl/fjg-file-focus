@@ -1029,7 +1029,7 @@ svg.oz-folder-toggle path {
 
 .ffm-navigator.ffm-wide.ffm-unpinned .ffm-columns { height:100%; }
 
-.ffm-modal button,.ffm-modal input,.oz-vault-live-controls button { min-height:44px; min-width:44px; }
+.ffm-modal button,.ffm-modal input { min-height:44px; min-width:44px; }
 
 .ffm-navigator .ffm-toolbar button.ffm-back { justify-content:flex-start; padding-inline:6px; }
 .ffm-navigator .oz-folder-toggle { color:var(--text-muted); }

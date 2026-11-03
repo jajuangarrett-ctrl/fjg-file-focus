@@ -211,7 +211,10 @@ export function FileComponent(props: FilesProps) {
     const filesToList: OZFile[] = useMemo(
         () =>
             FileViewHandlers.sortedFiles({
-                fileList: ozFileList,
+                fileList: ozFileList.filter(file => {
+                    const entry=plugin.app.vault.getAbstractFileByPath(file.path);
+                    return entry instanceof TFile && !Util.shouldExcludeFile({file:entry,plugin,excludedExtensions,excludedFolders});
+                }),
                 plugin: plugin,
                 ozPinnedFiles: ozPinnedFiles,
             }),

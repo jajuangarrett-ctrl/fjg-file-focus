@@ -11,7 +11,7 @@ export const openFile = async (props: { file: OZFile; app: App; newLeaf: boolean
     try {
         // Do not replace the navigator itself when it lives in a full tab.
         let leaf;
-        try { leaf = app.workspace.getLeaf(newLeaf || app.workspace.activeLeaf?.view?.getViewType() === 'fjg-file-focus-ffm-view'); }
+        try { leaf = app.workspace.getLeaf(newLeaf || app.workspace.activeLeaf?.view?.getViewType() === 'fjg-file-focus-view'); }
         catch { new Notice('New tab unavailable; using the current tab.'); leaf = app.workspace.getLeaf(false); }
         if (leafBySplit) {
             if (Platform.isMobile) { new Notice('Opening in a new tab on mobile.'); leaf=app.workspace.getLeaf(true); }
