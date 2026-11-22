@@ -7,7 +7,8 @@ import { getBookmarkTitle } from 'utils/Utils';
 import { ensureNoteProperties, ensureNotePropertiesWithNotice, isMarkdownFile } from 'utils/noteProperties';
 import { getPageText } from 'utils/noteContent';
 import { DebouncedBatchQueue, getMobilePerformancePolicy } from './mobilePerformance';
-import { VaultVoiceModal } from './live/modal';
+import { VaultVoiceModal, VaultVoiceView } from './live/modal';
+import { desktopVoiceAnchor, VAULT_VOICE_VIEW_TYPE } from './live/desktop-workspace';
 
 const FileFocusIcon = `
     <g fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
@@ -32,6 +33,9 @@ const FILE_FOCUS_TRASH_ICON = 'fjg-file-focus-trash';
 
 export default class FileTreeAlternativePlugin extends Plugin {
     private vaultVoiceModal: VaultVoiceModal | null = null;
+    private desktopVoiceLeaf: WorkspaceLeaf | null = null;
+    private desktopVoiceOpening = false;
+    private voiceUnloading = false;
     settings: FileTreeAlternativePluginSettings;
     ribbonIconEl: HTMLElement | undefined = undefined;
     inboxMorningBriefRibbonIconEl: HTMLElement | undefined = undefined;
@@ -75,6 +79,9 @@ export default class FileTreeAlternativePlugin extends Plugin {
         // Load Settings
         this.addSettingTab(new FileTreeAlternativePluginSettingsTab(this.app, this));
         await this.loadSettings();
+        this.registerView(VAULT_VOICE_VIEW_TYPE, leaf => new VaultVoiceView(leaf, this, closed => {
+            if (this.desktopVoiceLeaf === closed) this.desktopVoiceLeaf = null;
+        }));
         this.addCommand({ id: 'talk-to-vault', name: 'Talk to Your Vault', callback: () => this.openVaultVoice() });
 
         // Register File Tree View
@@ -213,7 +220,13 @@ export default class FileTreeAlternativePlugin extends Plugin {
     }
 
     onunload() {
+        this.voiceUnloading = true;
         this.vaultVoiceModal?.shutdown();
+        const desktopVoice = this.desktopVoiceLeaf;
+        this.desktopVoiceLeaf = null;
+        if (desktopVoice?.view instanceof VaultVoiceView) desktopVoice.view.shutdown();
+        else desktopVoice?.detach();
+        this.app.workspace.detachLeavesOfType(VAULT_VOICE_VIEW_TYPE);
         console.log('Unloading FJG File Focus Plugin');
         this.mobileVaultChangeQueue.clear();
         this.detachFileTreeLeafs();
@@ -248,9 +261,51 @@ export default class FileTreeAlternativePlugin extends Plugin {
     }
 
     openVaultVoice(selection = { folder: '', note: '' }): void {
+        if (this.voiceUnloading) return;
+        if (!Platform.isMobile) {
+            void this.openDesktopVaultVoice(selection);
+            return;
+        }
         if (this.vaultVoiceModal) return;
         this.vaultVoiceModal = new VaultVoiceModal(this.app, this, selection, () => { this.vaultVoiceModal = null; });
         this.vaultVoiceModal.open();
+    }
+
+    private async openDesktopVaultVoice(selection: { folder: string; note: string }): Promise<void> {
+        if (this.desktopVoiceOpening) return;
+        const workspace = this.app.workspace;
+        this.desktopVoiceOpening = true;
+        let created: WorkspaceLeaf | null = null;
+        try {
+            if (this.desktopVoiceLeaf) {
+                await workspace.revealLeaf(this.desktopVoiceLeaf);
+                return;
+            }
+            // A workspace saved with a former chat may restore a dormant tab.
+            // Never resume old audio or add a duplicate chat split.
+            workspace.detachLeavesOfType(VAULT_VOICE_VIEW_TYPE);
+            const anchor = desktopVoiceAnchor(workspace);
+            if (!anchor || anchor.getRoot() !== workspace.rootSplit) throw new Error('Main workspace unavailable.');
+            const initialNote = anchor.getViewState().state?.file;
+            const leaf = created = workspace.createLeafBySplit(anchor, 'vertical', true);
+            this.desktopVoiceLeaf = leaf;
+            await leaf.setViewState({ type: VAULT_VOICE_VIEW_TYPE, active: true });
+            if (typeof leaf.loadIfDeferred === 'function') await leaf.loadIfDeferred();
+            if (this.voiceUnloading || this.desktopVoiceLeaf !== leaf) return;
+            if (!(leaf.view instanceof VaultVoiceView)) throw new Error('Vault conversation view unavailable.');
+            leaf.view.attachConversation(anchor, {
+                ...selection, note: selection.note || (typeof initialNote === 'string' ? initialNote : ''),
+            });
+            await workspace.revealLeaf(leaf);
+        } catch {
+            if (created && this.desktopVoiceLeaf === created) {
+                created.detach();
+                this.desktopVoiceLeaf = null;
+            }
+            if (!this.voiceUnloading) new Notice('Could not open Talk to Your Vault in the main workspace.');
+        } finally {
+            this.desktopVoiceOpening = false;
+        }
     }
 
     async resolveVoiceApiKey(): Promise<string> {

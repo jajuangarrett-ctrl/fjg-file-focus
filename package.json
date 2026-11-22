@@ -1,6 +1,6 @@
 {
   "name": "fjg-file-focus",
-  "version": "0.3.8",
+  "version": "0.3.9",
   "description": "FJG-focused Obsidian file tree with sidebar recent notes and bookmarks.",
   "main": "main.js",
   "scripts": {
@@ -9,7 +9,8 @@
     "test": "node --no-warnings=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test tests/*.test.ts",
     "typecheck": "tsc --noEmit",
     "test:mobile:build": "node tests/mobile-browser/build.cjs",
-    "test:mobile": "node tests/mobile-browser/acceptance.cjs"
+    "test:mobile": "node tests/mobile-browser/acceptance.cjs",
+    "test:voice:browser": "node tests/voice-workspace-browser/run.cjs"
   },
   "keywords": [
     "obsidian",
